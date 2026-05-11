@@ -40,12 +40,10 @@ function makeCartKey(productId, options) {
   try {
     const o = options || {};
     const size = o.size || 'M';
-    const addons = o.addons || {};
-    const a = `${addons.card ? 1 : 0}${addons.choco ? 1 : 0}${addons.vase ? 1 : 0}`;
-    return `${productId}::${size}::${a}`;
+    return `${productId}::${size}`;
   } catch (error) {
     console.error('makeCartKey error:', error);
-    return `${productId}::M::000`;
+    return `${productId}::M`;
   }
 }
 
@@ -68,7 +66,9 @@ function useCartState({ onToast, lang }) {
         if (!product) return;
         const q = clamp(Number(qty || 1), 1, 20);
         const key = makeCartKey(product.id, options);
-        const unit = getSizedPrice(product.price, options?.size || 'M') + getAddonsPrice(options?.addons || {});
+
+        const unit = getSizedPrice(product.price, options?.size || 'M', product);
+
         setCart((prev) => {
           const items = (prev.items || []).slice();
           const idx = items.findIndex((i) => i.key === key);

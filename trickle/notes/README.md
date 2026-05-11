@@ -12,8 +12,9 @@ This is a multi-page demo storefront for a flower shop called “Art Passaion”
 
 ## Key Features
 
-- Product catalog with curated sample data
-- Product detail with size + add-ons affecting price
+- Product catalog sourced from the images uploaded into `trickle/assets/` (titles match the upload "description" you typed)
+- Product detail supports quantity for all items and size selection for teddy products
+- Catalog can include special items that redirect to external pages (e.g., “Свадьба” → Facebook)
 - Cart drawer with quantity controls
 - Checkout form with basic validation and updated payment methods
 - User-friendly toast notifications

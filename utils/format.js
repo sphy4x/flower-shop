@@ -50,6 +50,7 @@ function getQueryParam(name) {
   }
 }
 
+// RU phone helpers (kept for possible future use)
 function formatPhoneRU(input) {
   try {
     const digits = String(input || '').replace(/[^\d]/g, '');
@@ -82,6 +83,62 @@ function isValidPhoneRU(phone) {
     return digits.length === 11 && digits[0] === '7';
   } catch (error) {
     console.error('isValidPhoneRU error:', error);
+    return false;
+  }
+}
+
+// GR phone helpers (Thessaloniki store: +30 ...)
+function formatPhoneGR(input) {
+  try {
+    const digits = String(input || '').replace(/[^\d]/g, '');
+    if (!digits) return '';
+
+    // Remove leading 00 for international format and normalize to country code 30
+    let d = digits;
+    if (d.startsWith('00')) d = d.slice(2);
+
+    if (d.startsWith('30')) {
+      d = d.slice(2);
+    } else if (d.startsWith('0')) {
+      d = d.slice(1);
+    }
+
+    // Greek national number is typically 10 digits (e.g., 2310xxxxxx or 69xxxxxxxx)
+    const national = d.slice(0, 10);
+
+    const p1 = national.slice(0, 4);
+    const p2 = national.slice(4, 7);
+    const p3 = national.slice(7, 10);
+
+    let out = '+30';
+    if (p1) out += ` ${p1}`;
+    if (p2) out += ` ${p2}`;
+    if (p3) out += ` ${p3}`;
+    return out.trim();
+  } catch (error) {
+    console.error('formatPhoneGR error:', error);
+    return input || '';
+  }
+}
+
+function isValidPhoneGR(phone) {
+  try {
+    const digits = String(phone || '').replace(/[^\d]/g, '');
+    let d = digits;
+    if (d.startsWith('00')) d = d.slice(2);
+    if (d.startsWith('30')) d = d.slice(2);
+    if (d.startsWith('0')) d = d.slice(1);
+
+    // Expect 10-digit national number after normalization
+    if (d.length !== 10) return false;
+
+    // Landline starts with 2, mobile starts with 69
+    if (d[0] === '2') return true;
+    if (d.startsWith('69')) return true;
+
+    return false;
+  } catch (error) {
+    console.error('isValidPhoneGR error:', error);
     return false;
   }
 }
@@ -133,10 +190,33 @@ function renderAddonsShort(addons) {
   }
 }
 
-function getSizedPrice(base, size) {
+function normalizeSize(size) {
   try {
-    if (size === 'S') return Math.round(base * 0.82);
-    if (size === 'L') return Math.round(base * 1.25);
+    const s = String(size || '').trim().toUpperCase();
+    if (s === 'S' || s === 'M' || s === 'L') return s;
+    if (s === 'SMALL') return 'S';
+    if (s === 'LARGE') return 'L';
+    return 'M';
+  } catch (error) {
+    console.error('normalizeSize error:', error);
+    return 'M';
+  }
+}
+
+function getSizedPrice(base, size, product) {
+  try {
+    const p = product || null;
+    const s = normalizeSize(size);
+
+    // Special case: Teddy Bear Family Set has explicit pricing: small (base) and large (priceLarge)
+    if (p && p.flags && p.flags.hasLargeSize) {
+      if (s === 'L' && typeof p.priceLarge === 'number') return p.priceLarge;
+      return base;
+    }
+
+    // Generic bouquet scaling (kept for possible future use)
+    if (s === 'S') return Math.round(base * 0.82);
+    if (s === 'L') return Math.round(base * 1.25);
     return base;
   } catch (error) {
     console.error('getSizedPrice error:', error);
