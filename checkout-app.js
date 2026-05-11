@@ -36,6 +36,7 @@ function CheckoutApp() {
   try {
     const FORMSPREE_ENDPOINT = 'https://formspree.io/f/maqvaayk';
     const STORE_PHONE = '+30 231 602 6404';
+    const STORE_phone = '+30 697 173 7380';
     const PICKUP_ADDRESS = 'Leof. Andrea Papandreou 10, Neapoli 567 27';
     const CARD_IBANS = [
       'GR5001102240000022401224591',
@@ -399,7 +400,7 @@ ${buildOrderItemsText(order.items)}
                           ? `For all questions, contact the store by phone: ${STORE_PHONE}`
                           : lang === 'el'
                             ? `Για όλες τις ερωτήσεις επικοινωνήστε με το κατάστημα: ${STORE_PHONE}`
-                            : `По всем вопросам обращаться по телефону магазина: ${STORE_PHONE}`}
+                            : `По всем вопросам обращаться по телефону магазина: ${STORE_phone}`}
                       </div>
                     </div>
                   </div>
