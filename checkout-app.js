@@ -34,7 +34,7 @@ class ErrorBoundary extends React.Component {
 
 function CheckoutApp() {
   try {
-    const FORMSPREE_ENDPOINT = 'https://formspree.io/f/mrejrgar';
+    const FORMSPREE_ENDPOINT = 'https://formspree.io/f/maqvaayk';
 
     const [cartOpen, setCartOpen] = React.useState(false);
     const [toast, setToast] = React.useState({ open: false, title: '', message: '', type: 'info' });
