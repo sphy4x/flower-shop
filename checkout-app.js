@@ -34,9 +34,12 @@ class ErrorBoundary extends React.Component {
 
 function CheckoutApp() {
   try {
+    const FORMSPREE_ENDPOINT = 'https://formspree.io/f/mrejrgar';
+
     const [cartOpen, setCartOpen] = React.useState(false);
     const [toast, setToast] = React.useState({ open: false, title: '', message: '', type: 'info' });
     const [lang, setLang] = React.useState(() => getInitialLang());
+    const [isSubmitting, setIsSubmitting] = React.useState(false);
 
     const { cart, updateQty, removeFromCart, clearCart, totals } = useCartState({ onToast: setToast, lang });
 
@@ -85,8 +88,6 @@ function CheckoutApp() {
       try {
         if (totals.subtotal <= 0) return 0;
         if (form.delivery === 'Pickup' || form.delivery === 'Самовывоз') return 0;
-
-        // 5 EUR in current internal units (100 == 1 EUR)
         return 500;
       } catch (error) {
         console.error('Shipping calc error:', error);
@@ -114,12 +115,58 @@ function CheckoutApp() {
 
     const canSubmit = Object.keys(errors).length === 0;
 
-    const onSubmit = () => {
+    const buildOrderItemsText = (items) => {
+      return items.map((it, index) => {
+        const sizeText = it.options?.size
+          ? `${lang === 'en' ? 'Size' : lang === 'el' ? 'Μέγεθος' : 'Размер'}: ${it.options.size}`
+          : (lang === 'en' ? 'Standard' : lang === 'el' ? 'Στάνταρ' : 'Стандарт');
+
+        return `${index + 1}. ${it.title}
+   ${lang === 'en' ? 'Quantity' : lang === 'el' ? 'Ποσότητα' : 'Количество'}: ${it.qty}
+   ${sizeText}
+   ${lang === 'en' ? 'Line total' : lang === 'el' ? 'Σύνολο θέσης' : 'Сумма позиции'}: ${formatMoney(it.lineTotal)}`;
+      }).join('\n\n');
+    };
+
+    const buildOrderMessage = (order) => {
+      return `
+Order ID: ${order.orderId}
+Created at: ${order.createdAt}
+
+Customer name: ${order.form.name}
+Phone: ${order.form.phone}
+City: ${order.form.city}
+Delivery method: ${order.form.delivery}
+Address: ${order.form.address || '-'}
+Time slot: ${order.form.time}
+Payment: ${order.form.payment}
+Comment: ${order.form.comment || '-'}
+
+Items:
+${buildOrderItemsText(order.items)}
+
+Subtotal: ${formatMoney(order.pricing.subtotal)}
+Shipping: ${order.pricing.shipping === 0 ? 'Free' : formatMoney(order.pricing.shipping)}
+Total: ${formatMoney(order.pricing.total)}
+      `.trim();
+    };
+
+    const onSubmit = async () => {
       try {
-        if (!canSubmit) {
-          setToast({ open: true, title: t(lang, 'toastCheck'), message: t(lang, 'toastCheckMsg'), type: 'danger' });
+        if (!canSubmit || isSubmitting) {
+          if (!canSubmit) {
+            setToast({
+              open: true,
+              title: t(lang, 'toastCheck'),
+              message: t(lang, 'toastCheckMsg'),
+              type: 'danger'
+            });
+          }
           return;
         }
+
+        setIsSubmitting(true);
+
         const orderId = generateOrderId();
         const now = new Date().toISOString();
         const payLabel = (paymentOptions.find((p) => p.key === form.paymentKey) || paymentOptions[0]).label;
@@ -131,11 +178,63 @@ function CheckoutApp() {
           form: { ...form, payment: payLabel },
           pricing: { subtotal: totals.subtotal, shipping, discount, total }
         };
+
+        const message = buildOrderMessage(order);
+
+        const response = await fetch(FORMSPREE_ENDPOINT, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          body: JSON.stringify({
+            orderId: order.orderId,
+            createdAt: order.createdAt,
+            customerName: order.form.name,
+            phone: order.form.phone,
+            city: order.form.city,
+            delivery: order.form.delivery,
+            address: order.form.address || '-',
+            time: order.form.time,
+            payment: order.form.payment,
+            comment: order.form.comment || '-',
+            subtotal: formatMoney(order.pricing.subtotal),
+            shipping: order.pricing.shipping === 0 ? 'Free' : formatMoney(order.pricing.shipping),
+            total: formatMoney(order.pricing.total),
+            itemsCount: order.items.length,
+            message: message,
+            _subject: `Новый заказ ${order.orderId} — Art Passaion`
+          })
+        });
+
+        if (!response.ok) {
+          throw new Error(`Formspree error: ${response.status}`);
+        }
+
         setLastOrder(order);
         setConfirmOpen(true);
         clearCart();
+
+        setToast({
+          open: true,
+          title: lang === 'en' ? 'Order sent' : lang === 'el' ? 'Η παραγγελία στάλθηκε' : 'Заказ отправлен',
+          message: lang === 'en' ? 'Your order has been successfully sent.' : lang === 'el' ? 'Η παραγγελία στάλθηκε με επιτυχία.' : 'Ваш заказ успешно отправлен.',
+          type: 'success'
+        });
       } catch (error) {
         console.error('Checkout submit error:', error);
+        setToast({
+          open: true,
+          title: lang === 'en' ? 'Sending error' : lang === 'el' ? 'Σφάλμα αποστολής' : 'Ошибка отправки',
+          message: lang === 'en'
+            ? 'Could not send the order. Please try again.'
+            : lang === 'el'
+              ? 'Δεν ήταν δυνατή η αποστολή της παραγγελίας. Δοκίμασε ξανά.'
+              : 'Не удалось отправить заказ. Попробуйте ещё раз.',
+          type: 'danger'
+        });
+      } finally {
+        setIsSubmitting(false);
       }
     };
 
@@ -258,6 +357,7 @@ function CheckoutApp() {
                         return (
                           <button
                             key={p.key}
+                            type="button"
                             className={'btn ' + (active ? 'btn-primary' : 'btn-ghost')}
                             onClick={() => setForm({ ...form, paymentKey: p.key })}
                             data-name="pay"
@@ -290,9 +390,17 @@ function CheckoutApp() {
                     {t(lang, 'checkoutEditCart')}
                   </button>
 
-                  <button className={'btn ' + (canSubmit ? 'btn-primary' : 'btn-ghost') + ' ml-auto'} onClick={onSubmit} disabled={!canSubmit} data-name="submit" data-file="checkout-app.js">
+                  <button
+                    className={'btn ' + (canSubmit && !isSubmitting ? 'btn-primary' : 'btn-ghost') + ' ml-auto'}
+                    onClick={onSubmit}
+                    disabled={!canSubmit || isSubmitting}
+                    data-name="submit"
+                    data-file="checkout-app.js"
+                  >
                     <div className="icon-circle-check text-lg" data-name="submit-i" data-file="checkout-app.js"></div>
-                    {t(lang, 'checkoutSubmit')}
+                    {isSubmitting
+                      ? (lang === 'en' ? 'Sending...' : lang === 'el' ? 'Αποστολή...' : 'Отправка...')
+                      : t(lang, 'checkoutSubmit')}
                   </button>
                 </div>
               </div>
