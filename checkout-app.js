@@ -61,7 +61,6 @@ function CheckoutApp() {
 
     const paymentOptions = [
       { key: 'cash-store', label: t(lang, 'payCashStore'), icon: 'icon-banknote' },
-      { key: 'cash-courier', label: t(lang, 'payCashCourier'), icon: 'icon-truck' },
       { key: 'card-transfer', label: t(lang, 'payCardTransfer'), icon: 'icon-credit-card' }
     ];
 
@@ -78,7 +77,7 @@ function CheckoutApp() {
       address: PICKUP_ADDRESS,
       time: '',
       delivery: getPickupLabel(lang),
-      paymentKey: 'cash-courier',
+      paymentKey: 'cash-store',
       comment: ''
     });
 
@@ -126,10 +125,10 @@ function CheckoutApp() {
 
         if (!isValidPhoneGR(form.phone)) {
           e.phone = lang === 'en'
-            ? 'Enter a Greek phone number in +30 format (demo).'
+            ? 'Enter a Greek phone number in +30 format.'
             : lang === 'el'
-              ? 'Βάλε ελληνικό τηλέφωνο σε μορφή +30 (demo).'
-              : 'Введите греческий телефон в формате +30 (demo).';
+              ? 'Βάλε ελληνικό τηλέφωνο σε μορφή +30 .'
+              : 'Введите греческий телефон в формате +30 .';
         }
 
         if (!form.time) {
