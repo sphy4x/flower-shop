@@ -35,7 +35,12 @@ class ErrorBoundary extends React.Component {
 function CheckoutApp() {
   try {
     const FORMSPREE_ENDPOINT = 'https://formspree.io/f/maqvaayk';
-    const CARD_IBAN = 'GR5001102240000022401224591';
+    const STORE_PHONE = '+30 231 602 6404';
+    const PICKUP_ADDRESS = 'Leof. Andrea Papandreou 10, Neapoli 567 27';
+    const CARD_IBANS = [
+      'GR5001102240000022401224591',
+      'LT563250040999122145'
+    ];
 
     const [cartOpen, setCartOpen] = React.useState(false);
     const [toast, setToast] = React.useState({ open: false, title: '', message: '', type: 'info' });
@@ -59,13 +64,19 @@ function CheckoutApp() {
       { key: 'card-transfer', label: t(lang, 'payCardTransfer'), icon: 'icon-credit-card' }
     ];
 
+    const getPickupLabel = (currentLang) => {
+      if (currentLang === 'en') return 'Pickup';
+      if (currentLang === 'el') return 'Pickup';
+      return 'Самовывоз';
+    };
+
     const [form, setForm] = React.useState({
       name: '',
       phone: '',
-      city: lang === 'el' ? 'Θεσσαλονίκη' : 'Neapoli',
-      address: '',
+      city: lang === 'el' ? 'Θεσσαλονίκη' : 'Thessaloniki',
+      address: PICKUP_ADDRESS,
       time: '',
-      delivery: lang === 'en' ? 'Courier' : lang === 'el' ? 'Courier' : 'Курьер',
+      delivery: getPickupLabel(lang),
       paymentKey: 'cash-courier',
       comment: ''
     });
@@ -74,8 +85,9 @@ function CheckoutApp() {
       try {
         setForm((prev) => ({
           ...prev,
-          city: prev.city || (lang === 'el' ? 'Θεσσαλονίκη' : 'Neapoli'),
-          delivery: prev.delivery || (lang === 'en' ? 'Courier' : lang === 'el' ? 'Courier' : 'Курьер')
+          city: prev.city || (lang === 'el' ? 'Θεσσαλονίκη' : 'Thessaloniki'),
+          delivery: getPickupLabel(lang),
+          address: PICKUP_ADDRESS
         }));
       } catch (error) {
         console.error('Checkout form lang sync error:', error);
@@ -88,13 +100,12 @@ function CheckoutApp() {
     const shipping = React.useMemo(() => {
       try {
         if (totals.subtotal <= 0) return 0;
-        if (form.delivery === 'Pickup' || form.delivery === 'Самовывоз') return 0;
-        return 500;
+        return 0;
       } catch (error) {
         console.error('Shipping calc error:', error);
-        return 500;
+        return 0;
       }
-    }, [totals.subtotal, form.delivery]);
+    }, [totals.subtotal]);
 
     const discount = 0;
     const total = Math.max(0, totals.subtotal + shipping);
@@ -103,6 +114,7 @@ function CheckoutApp() {
       try {
         const e = {};
         if (totals.itemsCount <= 0) e.cart = t(lang, 'checkoutCartEmptyDesc');
+
         if (!form.name.trim()) {
           e.name = lang === 'en'
             ? 'Please enter your name.'
@@ -110,6 +122,7 @@ function CheckoutApp() {
               ? 'Συμπλήρωσε όνομα.'
               : 'Укажите имя.';
         }
+
         if (!isValidPhoneGR(form.phone)) {
           e.phone = lang === 'en'
             ? 'Enter a Greek phone number in +30 format (demo).'
@@ -117,13 +130,7 @@ function CheckoutApp() {
               ? 'Βάλε ελληνικό τηλέφωνο σε μορφή +30 (demo).'
               : 'Введите греческий телефон в формате +30 (demo).';
         }
-        if (form.delivery !== 'Pickup' && form.delivery !== 'Самовывоз' && !form.address.trim()) {
-          e.address = lang === 'en'
-            ? 'Enter delivery address.'
-            : lang === 'el'
-              ? 'Συμπλήρωσε διεύθυνση.'
-              : 'Укажите адрес доставки.';
-        }
+
         if (!form.time) {
           e.time = lang === 'en'
             ? 'Select a time slot.'
@@ -131,6 +138,7 @@ function CheckoutApp() {
               ? 'Διάλεξε ώρα.'
               : 'Выберите время.';
         }
+
         return e;
       } catch (error) {
         console.error('Checkout validation error:', error);
@@ -163,7 +171,8 @@ ${sizeText}
         ? `
 
 IBAN для оплаты:
-${CARD_IBAN}`
+1) ${CARD_IBANS[0]}
+2) ${CARD_IBANS[1]}`
         : '';
 
       return `
@@ -175,9 +184,10 @@ ${CARD_IBAN}`
 Имя: ${order.form.name}
 Телефон: ${order.form.phone}
 Город: ${order.form.city}
-Способ доставки: ${order.form.delivery}
-Адрес: ${order.form.address || '-'}
-Время доставки: ${order.form.time}
+Способ получения: ${order.form.delivery}
+Адрес самовывоза: ${PICKUP_ADDRESS}
+Телефон магазина: ${STORE_PHONE}
+Время: ${order.form.time}
 Способ оплаты: ${order.form.payment}
 Комментарий: ${order.form.comment || '-'}
 
@@ -186,7 +196,7 @@ ${buildOrderItemsText(order.items)}
 
 Итого по заказу:
 Товары: ${formatMoney(order.pricing.subtotal)}
-Доставка: ${order.pricing.shipping === 0 ? 'Бесплатно' : formatMoney(order.pricing.shipping)}
+Доставка: Бесплатно
 К оплате: ${formatMoney(order.pricing.total)}${ibanBlock}
       `.trim();
     };
@@ -215,7 +225,7 @@ ${buildOrderItemsText(order.items)}
           orderId,
           createdAt: now,
           items: cart.items,
-          form: { ...form, payment: payLabel },
+          form: { ...form, payment: payLabel, delivery: getPickupLabel(lang), address: PICKUP_ADDRESS },
           pricing: { subtotal: totals.subtotal, shipping, discount, total }
         };
 
@@ -236,10 +246,14 @@ ${buildOrderItemsText(order.items)}
             phone: order.form.phone,
             city: order.form.city,
             delivery: order.form.delivery,
-            address: order.form.address || '-',
+            address: PICKUP_ADDRESS,
             time: order.form.time,
             payment: order.form.payment,
             paymentKey: order.form.paymentKey,
+            storePhone: STORE_PHONE,
+            pickupAddress: PICKUP_ADDRESS,
+            iban1: CARD_IBANS[0],
+            iban2: CARD_IBANS[1],
             comment: order.form.comment || '-',
             message: message,
             _subject: `Новый заказ ${order.orderId} — Art Passaion`
@@ -359,50 +373,59 @@ ${buildOrderItemsText(order.items)}
                     >
                       {(lang === 'el'
                         ? ['Θεσσαλονίκη', 'Αθήνα', 'Καβάλα', 'Ιωάννινα']
-                        : ['Neapoli', 'Thessaloniki', 'Athens', 'Kavala']
+                        : ['Thessaloniki', 'Athens', 'Kavala', 'Ioannina']
                       ).map((c) => (
                         <option key={c} value={c} data-name="option" data-file="checkout-app.js">{c}</option>
                       ))}
                     </select>
                   </div>
 
-                  <div data-name="delivery" data-file="checkout-app.js">
-                    <label className="text-sm font-semibold text-[var(--muted-text-color)]" data-name="label" data-file="checkout-app.js">{t(lang, 'checkoutDelivery')}</label>
-                    <select
-                      className="input mt-2"
-                      value={form.delivery}
-                      onChange={(e) => setForm({ ...form, delivery: e.target.value })}
-                      data-name="select"
+                  <div data-name="delivery-info" data-file="checkout-app.js">
+                    <label className="text-sm font-semibold text-[var(--muted-text-color)]" data-name="label" data-file="checkout-app.js">
+                      {lang === 'en'
+                        ? 'Information'
+                        : lang === 'el'
+                          ? 'Πληροφορίες'
+                          : 'Информация'}
+                    </label>
+
+                    <div
+                      className="mt-2 p-4 rounded-xl border border-slate-200 bg-slate-50 text-slate-700"
+                      data-name="delivery-phone-box"
                       data-file="checkout-app.js"
                     >
-                      {(lang === 'en'
-                        ? ['Courier', 'Pickup']
-                        : lang === 'el'
-                          ? ['Courier', 'Pickup']
-                          : ['Курьер', 'Самовывоз']
-                      ).map((d) => (
-                        <option key={d} value={d} data-name="option" data-file="checkout-app.js">{d}</option>
-                      ))}
-                    </select>
+                      <div className="font-semibold" data-name="delivery-phone-text" data-file="checkout-app.js">
+                        {lang === 'en'
+                          ? `For all questions, contact the store by phone: ${STORE_PHONE}`
+                          : lang === 'el'
+                            ? `Για όλες τις ερωτήσεις επικοινωνήστε με το κατάστημα: ${STORE_PHONE}`
+                            : `По всем вопросам обращаться по телефону магазина: ${STORE_PHONE}`}
+                      </div>
+                    </div>
                   </div>
 
                   <div className="md:col-span-2" data-name="address" data-file="checkout-app.js">
-                    <label className="text-sm font-semibold text-[var(--muted-text-color)]" data-name="label" data-file="checkout-app.js">{t(lang, 'checkoutAddress')}</label>
+                    <label className="text-sm font-semibold text-[var(--muted-text-color)]" data-name="label" data-file="checkout-app.js">
+                      {lang === 'en'
+                        ? 'Pickup address'
+                        : lang === 'el'
+                          ? 'Διεύθυνση παραλαβής'
+                          : 'Адрес самовывоза'}
+                    </label>
                     <input
                       className="input mt-2"
-                      value={form.address}
-                      onChange={(e) => setForm({ ...form, address: e.target.value })}
-                      placeholder={lang === 'en' ? 'Street, building, floor…' : lang === 'el' ? 'Οδός, αριθμός, όροφος…' : 'Улица, дом, подъезд, этаж'}
-                      disabled={form.delivery === 'Pickup' || form.delivery === 'Самовывоз'}
+                      value={PICKUP_ADDRESS}
+                      disabled={true}
                       data-name="input"
                       data-file="checkout-app.js"
                     />
-                    {errors.address ? <div className="text-xs text-rose-600 mt-2" data-name="err" data-file="checkout-app.js">{errors.address}</div> : null}
-                    {(form.delivery === 'Pickup' || form.delivery === 'Самовывоз') ? (
-                      <div className="text-xs text-[var(--muted-text-color)] mt-2" data-name="pickup-hint" data-file="checkout-app.js">
-                        {t(lang, 'checkoutPickupHint')}
-                      </div>
-                    ) : null}
+                    <div className="text-xs text-[var(--muted-text-color)] mt-2" data-name="pickup-hint" data-file="checkout-app.js">
+                      {lang === 'en'
+                        ? `Store pickup: ${PICKUP_ADDRESS}`
+                        : lang === 'el'
+                          ? `Παραλαβή από κατάστημα: ${PICKUP_ADDRESS}`
+                          : `Самовывоз: ${PICKUP_ADDRESS}`}
+                    </div>
                   </div>
 
                   <div data-name="time" data-file="checkout-app.js">
@@ -452,7 +475,7 @@ ${buildOrderItemsText(order.items)}
                       className="input mt-2 h-[110px] resize-none"
                       value={form.comment}
                       onChange={(e) => setForm({ ...form, comment: e.target.value })}
-                      placeholder={lang === 'en' ? 'For example: leave with concierge…' : lang === 'el' ? 'Π.χ.: άφησε στον θυρωρό…' : 'Например: не звонить в домофон…'}
+                      placeholder={lang === 'en' ? 'For example: leave a note…' : lang === 'el' ? 'Π.χ.: αφήστε σημείωση…' : 'Например: дополнительная информация...'}
                       data-name="textarea"
                       data-file="checkout-app.js"
                     ></textarea>
@@ -491,10 +514,10 @@ ${buildOrderItemsText(order.items)}
                     </div>
                     <div className="text-sm text-[var(--muted-text-color)] mt-1" data-name="perk-desc" data-file="checkout-app.js">
                       {lang === 'en'
-                        ? 'A florist assembles your bouquet right before delivery and we secure wrapping for safe transport.'
+                        ? 'A florist assembles your bouquet right before pickup.'
                         : lang === 'el'
-                          ? 'Ο ανθοπώλης ετοιμάζει το μπουκέτο πριν την παράδοση και ασφαλίζουμε τη συσκευασία.'
-                          : 'Флорист собирает букет прямо перед доставкой, а мы фиксируем упаковку для безопасной перевозки.'}
+                          ? 'Ο ανθοπώλης ετοιμάζει το μπουκέτο λίγο πριν την παραλαβή.'
+                          : 'Флорист собирает букет непосредственно перед выдачей.'}
                     </div>
                   </div>
                 </div>
@@ -557,7 +580,7 @@ ${buildOrderItemsText(order.items)}
                   <div className="flex items-center justify-between text-sm" data-name="p2" data-file="checkout-app.js">
                     <span className="text-[var(--muted-text-color)]" data-name="cap" data-file="checkout-app.js">{t(lang, 'checkoutShipping')}</span>
                     <span className="font-bold" data-name="val" data-file="checkout-app.js">
-                      {shipping === 0 ? (lang === 'en' ? 'Free' : lang === 'el' ? 'Δωρεάν' : 'Бесплатно') : formatMoney(shipping)}
+                      {lang === 'en' ? 'Free' : lang === 'el' ? 'Δωρεάν' : 'Бесплатно'}
                     </span>
                   </div>
                   <div className="hidden" data-name="p3" data-file="checkout-app.js"></div>
@@ -567,10 +590,10 @@ ${buildOrderItemsText(order.items)}
                   </div>
                   <div className="text-xs text-[var(--muted-text-color)]" data-name="hint" data-file="checkout-app.js">
                     {lang === 'en'
-                      ? 'Shipping is calculated at checkout.'
+                      ? 'Pickup only.'
                       : lang === 'el'
-                        ? 'Τα έξοδα παράδοσης υπολογίζούνται στο checkout.'
-                        : 'Стоимость доставки рассчитывается при оформлении.'}
+                        ? 'Μόνο παραλαβή από κατάστημα.'
+                        : 'Только самовывоз.'}
                   </div>
                 </div>
               </div>
@@ -619,10 +642,10 @@ ${buildOrderItemsText(order.items)}
 
                 <div className="text-sm text-[var(--muted-text-color)] mt-2" data-name="order-when" data-file="checkout-app.js">
                   {lang === 'en'
-                    ? `Delivery time: ${lastOrder.form.time}`
+                    ? `Pickup time: ${lastOrder.form.time}`
                     : lang === 'el'
-                      ? `Ώρα παράδοσης: ${lastOrder.form.time}`
-                      : `Время доставки: ${lastOrder.form.time}`}
+                      ? `Ώρα παραλαβής: ${lastOrder.form.time}`
+                      : `Время: ${lastOrder.form.time}`}
                 </div>
 
                 <div className="text-sm text-[var(--muted-text-color)] mt-1" data-name="order-total" data-file="checkout-app.js">
@@ -641,7 +664,7 @@ ${buildOrderItemsText(order.items)}
                       data-file="checkout-app.js"
                     >
                       {lang === 'en'
-                        ? 'IBAN for payment:'
+                        ? 'IBANs for payment:'
                         : lang === 'el'
                           ? 'IBAN για πληρωμή:'
                           : 'IBAN для оплаты:'}
@@ -649,10 +672,18 @@ ${buildOrderItemsText(order.items)}
 
                     <div
                       className="mt-2 text-base font-extrabold break-all text-[var(--primary-color)]"
-                      data-name="iban-value"
+                      data-name="iban-value-1"
                       data-file="checkout-app.js"
                     >
-                      {CARD_IBAN}
+                      {CARD_IBANS[0]}
+                    </div>
+
+                    <div
+                      className="mt-2 text-base font-extrabold break-all text-[var(--primary-color)]"
+                      data-name="iban-value-2"
+                      data-file="checkout-app.js"
+                    >
+                      {CARD_IBANS[1]}
                     </div>
                   </div>
                 ) : null}
