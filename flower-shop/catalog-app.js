@@ -49,33 +49,36 @@ function CatalogApp() {
       }
     }, []);
 
-    const allProducts = React.useMemo(() => getAllProducts(lang), [lang]);
-    const categories = React.useMemo(() => getCategories(lang), [lang]);
-    const occasions = React.useMemo(() => getOccasions(lang), [lang]);
+    const allProducts = React.useMemo(() => getAllProducts(), []);
+    const categories = React.useMemo(() => getCategories(), []);
+    const occasions = React.useMemo(() => getOccasions(), []);
 
     const [query, setQuery] = React.useState('');
-    const [category, setCategory] = React.useState(() => (lang === 'en' ? 'All' : lang === 'el' ? 'Όλα' : 'Все'));
-    const [occasion, setOccasion] = React.useState(() => (lang === 'en' ? 'Any occasion' : lang === 'el' ? 'Οποιαδήποτε περίσταση' : 'Любой повод'));
+    const [category, setCategory] = React.useState('Все');
+    const [occasion, setOccasion] = React.useState('Любой повод');
     const [maxPrice, setMaxPrice] = React.useState(6500);
     const [sort, setSort] = React.useState('Популярные');
 
     const categoryLabel = lang === 'en' ? 'All' : lang === 'el' ? 'Όλα' : 'Все';
     const occasionLabel = lang === 'en' ? 'Any occasion' : lang === 'el' ? 'Οποιαδήποτε περίσταση' : 'Любой повод';
 
-    React.useEffect(() => {
+    const categoriesUI = React.useMemo(() => {
       try {
-        setCategory((prev) => {
-          if (prev === 'Все' || prev === 'All' || prev === 'Όλα') return categoryLabel;
-          return prev;
-        });
-        setOccasion((prev) => {
-          if (prev === 'Любой повод' || prev === 'Any occasion' || prev === 'Οποιαδήποτε περίσταση') return occasionLabel;
-          return prev;
-        });
+        return categories.map((c) => (c === 'Все' ? categoryLabel : c));
       } catch (error) {
-        console.error('Catalog label sync error:', error);
+        console.error('Categories UI error:', error);
+        return categories;
       }
-    }, [lang]);
+    }, [categories, categoryLabel]);
+
+    const occasionsUI = React.useMemo(() => {
+      try {
+        return occasions.map((o) => (o === 'Любой повод' ? occasionLabel : o));
+      } catch (error) {
+        console.error('Occasions UI error:', error);
+        return occasions;
+      }
+    }, [occasions, occasionLabel]);
 
     const filtered = React.useMemo(() => {
       try {
@@ -83,30 +86,15 @@ function CatalogApp() {
         let items = allProducts.slice();
 
         if (q) {
-          items = items.filter((p) => {
-            const text = (p.title + ' ' + p.short + ' ' + (p.tags || []).join(' ')).toLowerCase();
-            return text.includes(q);
-          });
+          items = items.filter((p) => (p.title + ' ' + p.short + ' ' + p.tags.join(' ')).toLowerCase().includes(q));
         }
 
-        if (category !== categoryLabel) {
-          items = items.filter((p) => (p.categoryLabel || p.category) === category);
-        }
-        if (occasion !== occasionLabel) {
-          items = items.filter((p) => (p.occasionsLabel || p.occasions || []).includes(occasion));
-        }
+        const categoryValue = category === categoryLabel ? 'Все' : category;
+        const occasionValue = occasion === occasionLabel ? 'Любой повод' : occasion;
 
-        // Всегда показываем «Свадьба» независимо от фильтра цены.
-        items = items.filter((p) => {
-          const isWedding =
-            String((p && p.id) || '').toLowerCase() === 'свадьба' ||
-            String((p && p.title) || '').toLowerCase() === 'свадьба';
-
-          if (isWedding) return true;
-
-          const price = Number(p && typeof p.price === 'number' ? p.price : 0);
-          return price <= maxPrice;
-        });
+        if (categoryValue !== 'Все') items = items.filter((p) => p.category === categoryValue);
+        if (occasionValue !== 'Любой повод') items = items.filter((p) => p.occasions.includes(occasionValue));
+        items = items.filter((p) => p.price <= maxPrice);
 
         const sortValue = sort;
         if (sortValue === t(lang, 'catalogSortPriceAsc')) items.sort((a, b) => a.price - b.price);
@@ -140,9 +128,9 @@ function CatalogApp() {
       <div className="min-h-screen" data-name="page-shell" data-page-shell="true" data-file="catalog-app.js">
         <Header variant="catalog" cartCount={totals.itemsCount} onCartClick={() => setCartOpen(true)} lang={lang} onLangChange={setLang} />
 
-        <main className="container-shell container-shell--wide py-8" data-name="main" data-file="catalog-app.js">
-          <div className="flex flex-col xl:flex-row gap-6" data-name="layout" data-file="catalog-app.js">
-            <aside className="card p-5 xl:w-[380px] xl:sticky xl:top-[84px] xl:self-start" data-name="filters" data-file="catalog-app.js">
+        <main className="container-shell py-8" data-name="main" data-file="catalog-app.js">
+          <div className="flex flex-col lg:flex-row gap-6" data-name="layout" data-file="catalog-app.js">
+            <aside className="card p-5 lg:w-[360px]" data-name="filters" data-file="catalog-app.js">
               <div className="flex items-center justify-between mb-3" data-name="filters-header" data-file="catalog-app.js">
                 <h1 className="text-xl font-extrabold" data-name="title" data-file="catalog-app.js">{t(lang, 'catalogTitle')}</h1>
                 <div className="badge bg-slate-100 text-slate-700" data-name="count" data-file="catalog-app.js">
@@ -170,7 +158,7 @@ function CatalogApp() {
                 <div data-name="filter-category" data-file="catalog-app.js">
                   <label className="text-sm font-semibold text-[var(--muted-text-color)]" data-name="label" data-file="catalog-app.js">{t(lang, 'catalogCategory')}</label>
                   <select className="input mt-2" value={category} onChange={(e) => setCategory(e.target.value)} data-name="select" data-file="catalog-app.js">
-                    {categories.map((c, idx) => (
+                    {categoriesUI.map((c, idx) => (
                       <option key={idx} value={c} data-name="option" data-file="catalog-app.js">{c}</option>
                     ))}
                   </select>
@@ -179,7 +167,7 @@ function CatalogApp() {
                 <div data-name="filter-occasion" data-file="catalog-app.js">
                   <label className="text-sm font-semibold text-[var(--muted-text-color)]" data-name="label" data-file="catalog-app.js">{t(lang, 'catalogOccasion')}</label>
                   <select className="input mt-2" value={occasion} onChange={(e) => setOccasion(e.target.value)} data-name="select" data-file="catalog-app.js">
-                    {occasions.map((o, idx) => (
+                    {occasionsUI.map((o, idx) => (
                       <option key={idx} value={o} data-name="option" data-file="catalog-app.js">{o}</option>
                     ))}
                   </select>
@@ -187,7 +175,7 @@ function CatalogApp() {
 
                 <div data-name="filter-price" data-file="catalog-app.js">
                   <label className="text-sm font-semibold text-[var(--muted-text-color)]" data-name="label" data-file="catalog-app.js">
-                    {t(lang, 'catalogPriceUpTo')} <span className="font-extrabold text-[var(--text-color)]" data-name="price-val" data-file="catalog-app.js">{formatMoney(maxPrice)}</span>
+                    {t(lang, 'catalogPriceUpTo')} <span className="font-extrabold text-[var(--text-color)]" data-name="price-val" data-file="catalog-app.js">{formatRUB(maxPrice)}</span>
                   </label>
                   <input
                     type="range"
@@ -201,8 +189,8 @@ function CatalogApp() {
                     data-file="catalog-app.js"
                   />
                   <div className="flex justify-between text-xs text-[var(--muted-text-color)] mt-2" data-name="range-labels" data-file="catalog-app.js">
-                    <span data-name="min" data-file="catalog-app.js">{formatMoney(1800)}</span>
-                    <span data-name="max" data-file="catalog-app.js">{formatMoney(9500)}</span>
+                    <span data-name="min" data-file="catalog-app.js">{formatRUB(1800)}</span>
+                    <span data-name="max" data-file="catalog-app.js">{formatRUB(9500)}</span>
                   </div>
                 </div>
 
@@ -243,20 +231,20 @@ function CatalogApp() {
                     <div className="icon-truck text-xl text-white" data-name="promo-icon-i" data-file="catalog-app.js"></div>
                   </div>
                   <div data-name="promo-text" data-file="catalog-app.js">
-                    <p className="font-extrabold" data-name="promo-title" data-file="catalog-app.js">{lang === 'en' ? 'Delivery service' : lang === 'el' ? 'Υπηρεσία παράδοσης' : 'Доставка'}</p>
-                    <p className="text-sm text-white/80 mt-1" data-name="promo-desc" data-file="catalog-app.js">{lang === 'en' ? 'Choose a convenient time slot at checkout.' : lang === 'el' ? 'Διάλεξε ώρα στην ολοκλήρωση.' : 'Выберите удобное время при оформлении.'}</p>
+                    <p className="font-extrabold" data-name="promo-title" data-file="catalog-app.js">{t(lang, 'catalogPromoTitle')}</p>
+                    <p className="text-sm text-white/80 mt-1" data-name="promo-desc" data-file="catalog-app.js">{t(lang, 'catalogPromoDesc')}</p>
                   </div>
                 </div>
               </div>
             </aside>
 
             <section className="flex-1" data-name="grid-section" data-file="catalog-app.js">
-              <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-6" data-name="grid" data-file="catalog-app.js">
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5" data-name="grid" data-file="catalog-app.js">
                 {filtered.map((p) => (
                   <ProductCard
                     key={p.id}
                     product={p}
-                    onOpen={() => openProductOrExternal(p, `product.html?id=${encodeURIComponent(p.id)}`)}
+                    onOpen={() => (window.location.href = `product.html?id=${encodeURIComponent(p.id)}`)}
                     onAdd={() => addToCart(p, 1, {})}
                     dataFile="catalog-app.js"
                     lang={lang}

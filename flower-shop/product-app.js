@@ -50,38 +50,18 @@ function ProductApp() {
     }, []);
 
     const productId = getQueryParam('id');
-    const product = productId ? getProductById(productId, lang) : null;
+    const product = productId ? getProductById(productId) : null;
 
-    React.useEffect(() => {
-      try {
-        if (!product) return;
-        const url = getExternalProductUrl(product);
-        if (!url) return;
-        window.location.href = url;
-      } catch (error) {
-        console.error('Product external redirect error:', error);
-      }
-    }, [productId, lang]);
-
-    React.useEffect(() => {
-      try {
-        if (!product) return;
-        const url = getExternalProductUrl(product);
-        if (!url) return;
-        window.location.href = url;
-      } catch (error) {
-        console.error('Product external redirect error:', error);
-      }
-    }, [productId, lang]);
-
-    const [size, setSize] = React.useState('S');
+    const [size, setSize] = React.useState('M');
     const [qty, setQty] = React.useState(1);
+    const [addons, setAddons] = React.useState({ card: false, choco: false, vase: false });
 
     React.useEffect(() => {
       try {
         if (!product) return;
-        setSize('S');
+        setSize('M');
         setQty(1);
+        setAddons({ card: false, choco: false, vase: false });
       } catch (error) {
         console.error('Product state init error:', error);
       }
@@ -123,17 +103,12 @@ function ProductApp() {
       );
     }
 
-    const isFamilyTeddy = Boolean(product && product.flags && product.flags.hasLargeSize);
-    const effectiveSize = isFamilyTeddy ? size : 'M';
-    const unitPrice = getSizedPrice(product.price, effectiveSize, product);
+    const currentPrice = getSizedPrice(product.price, size);
+    const addonsPrice = getAddonsPrice(addons);
+    const unitPrice = currentPrice + addonsPrice;
     const totalPrice = unitPrice * qty;
 
-    const related = getRelatedProducts(product, 6, lang);
-
-    const sizeOptions = [
-      { key: 'S', label: lang === 'en' ? 'Small' : lang === 'el' ? 'Μικρό' : 'Маленький' },
-      { key: 'L', label: lang === 'en' ? 'Large' : lang === 'el' ? 'Μεγάλο' : 'Большой' }
-    ];
+    const related = getRelatedProducts(product, 6);
 
     return (
       <div className="min-h-screen" data-name="page-shell" data-page-shell="true" data-file="product-app.js">
@@ -151,8 +126,8 @@ function ProductApp() {
           <div className="mt-5 grid grid-cols-1 lg:grid-cols-2 gap-6" data-name="top" data-file="product-app.js">
             <section className="card overflow-hidden" data-name="gallery" data-file="product-app.js">
               <div className="relative" data-name="img-wrap" data-file="product-app.js">
-                <div className="w-full aspect-[4/5] bg-slate-100" data-name="img-aspect" data-file="product-app.js">
-                  <img src={product.image} alt={product.title} className="w-full h-full object-cover object-top" data-name="img" data-file="product-app.js" />
+                <div className="w-full aspect-[16/11] bg-slate-100" data-name="img-aspect" data-file="product-app.js">
+                  <img src={product.image} alt={product.title} className="w-full h-full object-cover" data-name="img" data-file="product-app.js" />
                 </div>
                 <div className="absolute top-4 left-4 flex gap-2" data-name="badges" data-file="product-app.js">
                   {product.isNew ? (
@@ -197,38 +172,75 @@ function ProductApp() {
               <div className="flex items-start justify-between gap-4" data-name="price-row" data-file="product-app.js">
                 <div data-name="price-left" data-file="product-app.js">
                   <div className="text-sm text-[var(--muted-text-color)]" data-name="price-cap" data-file="product-app.js">{t(lang, 'productPricePer')}</div>
-                  <div className="text-3xl font-extrabold mt-1" data-name="price" data-file="product-app.js">{formatMoney(unitPrice)}</div>
+                  <div className="text-3xl font-extrabold mt-1" data-name="price" data-file="product-app.js">{formatRUB(unitPrice)}</div>
                   <div className="text-xs text-[var(--muted-text-color)] mt-1" data-name="price-note" data-file="product-app.js">{t(lang, 'productPriceNote')}</div>
+                </div>
+                <div className="p-3 rounded-xl bg-slate-900 text-white" data-name="deliver-badge" data-file="product-app.js">
+                  <div className="flex items-center gap-2 text-sm font-bold" data-name="db-row" data-file="product-app.js">
+                    <div className="icon-truck text-lg text-white" data-name="db-i" data-file="product-app.js"></div>
+                    {t(lang, 'productDelivery')}
+                  </div>
+                  <div className="text-xs text-white/80 mt-1" data-name="db-val" data-file="product-app.js">{t(lang, 'productDeliveryFrom')}</div>
                 </div>
               </div>
 
-              {isFamilyTeddy ? (
-                <div className="mt-5" data-name="size" data-file="product-app.js">
-                  <div className="text-sm font-semibold" data-name="size-label" data-file="product-app.js">
-                    {lang === 'en' ? 'Size (Small / Large)' : lang === 'el' ? 'Μέγεθος (Μικρό / Μεγάλο)' : 'Размер (маленький / большой)'}
-                  </div>
-                  <div className="mt-2 grid grid-cols-2 gap-2" data-name="size-grid" data-file="product-app.js">
-                    {sizeOptions.map((opt) => (
-                      <button
-                        key={opt.key}
-                        className={'btn ' + (size === opt.key ? 'btn-primary' : 'btn-ghost')}
-                        onClick={() => setSize(opt.key)}
-                        data-name="size-btn"
-                        data-file="product-app.js"
-                      >
-                        {opt.label}
-                      </button>
-                    ))}
-                  </div>
-                  <div className="mt-2 text-xs text-[var(--muted-text-color)]" data-name="size-hint" data-file="product-app.js">
-                    {lang === 'en'
-                      ? 'For this item only: Large has a fixed price.'
-                      : lang === 'el'
-                        ? 'Μόνο για αυτό το προϊόν: το Μεγάλο έχει σταθερή τιμή.'
-                        : 'Только для этого товара: у большого фиксированная цена.'}
-                  </div>
+              <div className="mt-5" data-name="size" data-file="product-app.js">
+                <div className="text-sm font-semibold" data-name="size-label" data-file="product-app.js">{t(lang, 'productSize')}</div>
+                <div className="mt-2 grid grid-cols-3 gap-2" data-name="size-grid" data-file="product-app.js">
+                  {['S', 'M', 'L'].map((s) => (
+                    <button
+                      key={s}
+                      className={'btn ' + (size === s ? 'btn-primary' : 'btn-ghost')}
+                      onClick={() => setSize(s)}
+                      data-name="size-btn"
+                      data-file="product-app.js"
+                    >
+                      {s}
+                    </button>
+                  ))}
                 </div>
-              ) : null}
+                <div className="mt-2 text-xs text-[var(--muted-text-color)]" data-name="size-hint" data-file="product-app.js">
+                  {t(lang, 'productSizeHint')}
+                </div>
+              </div>
+
+              <div className="mt-5" data-name="addons" data-file="product-app.js">
+                <div className="text-sm font-semibold" data-name="addons-label" data-file="product-app.js">{t(lang, 'productAddons')}</div>
+                <div className="mt-2 grid grid-cols-1 gap-2" data-name="addons-grid" data-file="product-app.js">
+                  <label className="flex items-center justify-between p-3 rounded-xl border border-slate-200 bg-white cursor-pointer" data-name="addon" data-file="product-app.js">
+                    <span className="flex items-center gap-2 text-sm font-semibold" data-name="addon-left" data-file="product-app.js">
+                      <div className="icon-message-square-text text-lg text-slate-700" data-name="a-i" data-file="product-app.js"></div>
+                      {t(lang, 'productAddonCard')}
+                    </span>
+                    <span className="flex items-center gap-3" data-name="addon-right" data-file="product-app.js">
+                      <span className="text-sm font-bold" data-name="addon-price" data-file="product-app.js">+ {formatRUB(190)}</span>
+                      <input type="checkbox" checked={addons.card} onChange={(e) => setAddons({ ...addons, card: e.target.checked })} data-name="addon-check" data-file="product-app.js" />
+                    </span>
+                  </label>
+
+                  <label className="flex items-center justify-between p-3 rounded-xl border border-slate-200 bg-white cursor-pointer" data-name="addon2" data-file="product-app.js">
+                    <span className="flex items-center gap-2 text-sm font-semibold" data-name="addon-left" data-file="product-app.js">
+                      <div className="icon-candy text-lg text-slate-700" data-name="a2-i" data-file="product-app.js"></div>
+                      {t(lang, 'productAddonChoco')}
+                    </span>
+                    <span className="flex items-center gap-3" data-name="addon-right" data-file="product-app.js">
+                      <span className="text-sm font-bold" data-name="addon-price" data-file="product-app.js">+ {formatRUB(290)}</span>
+                      <input type="checkbox" checked={addons.choco} onChange={(e) => setAddons({ ...addons, choco: e.target.checked })} data-name="addon-check" data-file="product-app.js" />
+                    </span>
+                  </label>
+
+                  <label className="flex items-center justify-between p-3 rounded-xl border border-slate-200 bg-white cursor-pointer" data-name="addon3" data-file="product-app.js">
+                    <span className="flex items-center gap-2 text-sm font-semibold" data-name="addon-left" data-file="product-app.js">
+                      <div className="icon-glass-water text-lg text-slate-700" data-name="a3-i" data-file="product-app.js"></div>
+                      {t(lang, 'productAddonVase')}
+                    </span>
+                    <span className="flex items-center gap-3" data-name="addon-right" data-file="product-app.js">
+                      <span className="text-sm font-bold" data-name="addon-price" data-file="product-app.js">+ {formatRUB(890)}</span>
+                      <input type="checkbox" checked={addons.vase} onChange={(e) => setAddons({ ...addons, vase: e.target.checked })} data-name="addon-check" data-file="product-app.js" />
+                    </span>
+                  </label>
+                </div>
+              </div>
 
               <div className="mt-5" data-name="qty" data-file="product-app.js">
                 <div className="text-sm font-semibold" data-name="qty-label" data-file="product-app.js">{t(lang, 'productQty')}</div>
@@ -249,13 +261,13 @@ function ProductApp() {
               <div className="mt-6 p-4 rounded-2xl bg-slate-50 border border-slate-200" data-name="total-box" data-file="product-app.js">
                 <div className="flex items-center justify-between" data-name="tb-row" data-file="product-app.js">
                   <span className="text-sm text-[var(--muted-text-color)]" data-name="tb-cap" data-file="product-app.js">{t(lang, 'productTotal')}</span>
-                  <span className="text-lg font-extrabold" data-name="tb-total" data-file="product-app.js">{formatMoney(totalPrice)}</span>
+                  <span className="text-lg font-extrabold" data-name="tb-total" data-file="product-app.js">{formatRUB(totalPrice)}</span>
                 </div>
                 <div className="mt-3 grid grid-cols-1 gap-2" data-name="tb-actions" data-file="product-app.js">
                   <button
                     className="btn btn-primary w-full"
                     onClick={() => {
-                      addToCart(product, qty, isFamilyTeddy ? { size } : {});
+                      addToCart(product, qty, { size, addons });
                       setToast({ open: true, title: t(lang, 'toastAddedToCartTitle'), message: `${product.title} — ${qty}`, type: 'success' });
                       setCartOpen(true);
                     }}
@@ -268,7 +280,7 @@ function ProductApp() {
                   <button
                     className="btn btn-ghost w-full"
                     onClick={() => {
-                      addToCart(product, qty, isFamilyTeddy ? { size } : {});
+                      addToCart(product, qty, { size, addons });
                       window.location.href = 'checkout.html';
                     }}
                     data-name="buy-now"
@@ -298,6 +310,38 @@ function ProductApp() {
               </div>
             </aside>
           </div>
+
+          <section className="mt-8 card p-5" data-name="composition" data-file="product-app.js">
+            <div className="flex items-center justify-between" data-name="comp-head" data-file="product-app.js">
+              <h2 className="text-lg font-extrabold" data-name="comp-title" data-file="product-app.js">{t(lang, 'productCompositionTitle')}</h2>
+              <div className="badge bg-slate-100 text-slate-700" data-name="comp-badge" data-file="product-app.js">
+                <div className="icon-list text-sm" data-name="cb-i" data-file="product-app.js"></div>
+                <span data-name="cb-t" data-file="product-app.js">{product.flowers.length}</span>
+              </div>
+            </div>
+
+            <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3" data-name="comp-grid" data-file="product-app.js">
+              <div className="p-4 rounded-2xl bg-white border border-slate-200" data-name="comp-left" data-file="product-app.js">
+                <div className="text-sm font-bold" data-name="comp-sub" data-file="product-app.js">{t(lang, 'productFlowers')}</div>
+                <ul className="mt-2 space-y-2" data-name="comp-list" data-file="product-app.js">
+                  {product.flowers.map((f) => (
+                    <li key={f} className="flex items-center justify-between text-sm" data-name="comp-item" data-file="product-app.js">
+                      <span className="text-slate-900" data-name="comp-item-t" data-file="product-app.js">{f}</span>
+                      <span className="text-slate-500" data-name="comp-item-s" data-file="product-app.js">{t(lang, 'productInComposition')}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div className="p-4 rounded-2xl bg-white border border-slate-200" data-name="comp-right" data-file="product-app.js">
+                <div className="text-sm font-bold" data-name="care-sub" data-file="product-app.js">{t(lang, 'productCareTitle')}</div>
+                <ol className="mt-2 space-y-2 text-sm text-[var(--muted-text-color)]" data-name="care-list" data-file="product-app.js">
+                  <li data-name="care-item" data-file="product-app.js">{t(lang, 'productCare1')}</li>
+                  <li data-name="care-item2" data-file="product-app.js">{t(lang, 'productCare2')}</li>
+                  <li data-name="care-item3" data-file="product-app.js">{t(lang, 'productCare3')}</li>
+                </ol>
+              </div>
+            </div>
+          </section>
 
           <section className="mt-8" data-name="related" data-file="product-app.js">
             <div className="flex items-end justify-between gap-4" data-name="rel-head" data-file="product-app.js">

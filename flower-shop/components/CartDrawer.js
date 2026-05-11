@@ -5,7 +5,7 @@ function CartDrawer({ open, onClose, cart, totals, onInc, onDec, onRemove, onCle
     const l = lang || getInitialLang();
     const items = (cart && cart.items) ? cart.items : [];
 
-    const subLine = t(l, 'cartSub', { count: totals?.itemsCount || 0, sum: formatMoney(totals?.subtotal || 0) });
+    const subLine = t(l, 'cartSub', { count: totals?.itemsCount || 0, sum: formatRUB(totals?.subtotal || 0) });
 
     return (
       <div className="fixed inset-0 z-50" data-name="cart-wrap" data-file="components/CartDrawer.js">
@@ -54,6 +54,7 @@ function CartDrawer({ open, onClose, cart, totals, onInc, onDec, onRemove, onCle
                       <div className="font-extrabold truncate" data-name="title" data-file="components/CartDrawer.js">{it.title}</div>
                       <div className="text-xs text-[var(--muted-text-color)] mt-1" data-name="meta" data-file="components/CartDrawer.js">
                         {it.options?.size ? (l === 'en' ? `Size ${it.options.size}` : l === 'el' ? `Μέγεθος ${it.options.size}` : `Размер ${it.options.size}`) : (l === 'en' ? 'Standard' : l === 'el' ? 'Στάνταρ' : 'Стандарт')}
+                        {it.options?.addons ? renderAddonsShort(it.options.addons) : ''}
                       </div>
                       <div className="mt-2 flex items-center gap-2" data-name="qty" data-file="components/CartDrawer.js">
                         <button className="btn btn-ghost px-2 py-1" onClick={() => onDec(it.key)} data-name="dec" data-file="components/CartDrawer.js">
@@ -69,7 +70,7 @@ function CartDrawer({ open, onClose, cart, totals, onInc, onDec, onRemove, onCle
                         </button>
                       </div>
                     </div>
-                    <div className="text-sm font-extrabold" data-name="price" data-file="components/CartDrawer.js">{formatMoney(it.lineTotal)}</div>
+                    <div className="text-sm font-extrabold" data-name="price" data-file="components/CartDrawer.js">{formatRUB(it.lineTotal)}</div>
                   </div>
                 ))}
               </div>
@@ -79,7 +80,7 @@ function CartDrawer({ open, onClose, cart, totals, onInc, onDec, onRemove, onCle
           <div className="p-5 border-t border-slate-200 bg-white space-y-3" data-name="foot" data-file="components/CartDrawer.js">
             <div className="flex items-center justify-between" data-name="totals" data-file="components/CartDrawer.js">
               <div className="text-sm text-[var(--muted-text-color)]" data-name="cap" data-file="components/CartDrawer.js">{t(l, 'cartPayable')}</div>
-              <div className="text-xl font-extrabold" data-name="val" data-file="components/CartDrawer.js">{formatMoney(totals?.subtotal || 0)}</div>
+              <div className="text-xl font-extrabold" data-name="val" data-file="components/CartDrawer.js">{formatRUB(totals?.subtotal || 0)}</div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2" data-name="actions" data-file="components/CartDrawer.js">

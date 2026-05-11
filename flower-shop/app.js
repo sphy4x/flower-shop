@@ -89,7 +89,7 @@ function App() {
 
         <main data-name="main" data-file="app.js">
           <HomeHero lang={lang} onPrimary={() => (window.location.href = 'catalog.html')} onSecondary={openCart} />
-          <HomeFeatured lang={lang} products={getFeaturedProducts(lang)} onAdd={(p) => addToCart(p, 1, {})} />
+          <HomeFeatured lang={lang} products={getFeaturedProducts()} onAdd={(p) => addToCart(p, 1, {})} />
           <HomeBenefits lang={lang} />
           <HomeReviews lang={lang} />
           <HomeFAQ lang={lang} />

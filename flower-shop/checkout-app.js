@@ -60,6 +60,7 @@ function CheckoutApp() {
       phone: '',
       city: lang === 'el' ? 'Θεσσαλονίκη' : 'Neapoli',
       address: '',
+      date: '',
       time: '',
       delivery: lang === 'en' ? 'Courier' : lang === 'el' ? 'Courier' : 'Курьер',
       paymentKey: 'cash-courier',
@@ -85,25 +86,35 @@ function CheckoutApp() {
       try {
         if (totals.subtotal <= 0) return 0;
         if (form.delivery === 'Pickup' || form.delivery === 'Самовывоз') return 0;
-
-        // 5 EUR in current internal units (100 == 1 EUR)
-        return 500;
+        if (totals.subtotal >= 8000) return 0;
+        return 390;
       } catch (error) {
         console.error('Shipping calc error:', error);
-        return 500;
+        return 390;
       }
     }, [totals.subtotal, form.delivery]);
 
-    const discount = 0;
-    const total = Math.max(0, totals.subtotal + shipping);
+    const discount = React.useMemo(() => {
+      try {
+        if (totals.subtotal >= 9000) return Math.round(totals.subtotal * 0.07);
+        if (totals.subtotal >= 6500) return Math.round(totals.subtotal * 0.05);
+        return 0;
+      } catch (error) {
+        console.error('Discount calc error:', error);
+        return 0;
+      }
+    }, [totals.subtotal]);
+
+    const total = Math.max(0, totals.subtotal + shipping - discount);
 
     const errors = React.useMemo(() => {
       try {
         const e = {};
         if (totals.itemsCount <= 0) e.cart = t(lang, 'checkoutCartEmptyDesc');
         if (!form.name.trim()) e.name = lang === 'en' ? 'Please enter your name.' : lang === 'el' ? 'Συμπλήρωσε όνομα.' : 'Укажите имя.';
-        if (!isValidPhoneGR(form.phone)) e.phone = lang === 'en' ? 'Enter a Greek phone number in +30 format (demo).' : lang === 'el' ? 'Βάλε ελληνικό τηλέφωνο σε μορφή +30 (demo).' : 'Введите греческий телефон в формате +30 (demo).';
+        if (!isValidPhoneRU(form.phone)) e.phone = lang === 'en' ? 'Enter phone in +7 (999) 000-00-00 format (demo).' : lang === 'el' ? 'Βάλε τηλέφωνο σε μορφή +7 (999) 000-00-00 (demo).' : 'Введите телефон в формате +7 (999) 000-00-00.';
         if (form.delivery !== 'Pickup' && form.delivery !== 'Самовывоз' && !form.address.trim()) e.address = lang === 'en' ? 'Enter delivery address.' : lang === 'el' ? 'Συμπλήρωσε διεύθυνση.' : 'Укажите адрес доставки.';
+        if (!form.date) e.date = lang === 'en' ? 'Select a date.' : lang === 'el' ? 'Διάλεξε ημερομηνία.' : 'Выберите дату.';
         if (!form.time) e.time = lang === 'en' ? 'Select a time slot.' : lang === 'el' ? 'Διάλεξε ώρα.' : 'Выберите время.';
         return e;
       } catch (error) {
@@ -182,15 +193,7 @@ function CheckoutApp() {
 
                   <div data-name="phone" data-file="checkout-app.js">
                     <label className="text-sm font-semibold text-[var(--muted-text-color)]" data-name="label" data-file="checkout-app.js">{t(lang, 'checkoutPhone')}</label>
-                    <input
-                      className="input mt-2"
-                      value={form.phone}
-                      onChange={(e) => setForm({ ...form, phone: formatPhoneGR(e.target.value) })}
-                      placeholder="+30 2310 000 000"
-                      inputMode="tel"
-                      data-name="input"
-                      data-file="checkout-app.js"
-                    />
+                    <input className="input mt-2" value={form.phone} onChange={(e) => setForm({ ...form, phone: formatPhoneRU(e.target.value) })} placeholder="+7 (999) 000-00-00" data-name="input" data-file="checkout-app.js" />
                     {errors.phone ? <div className="text-xs text-rose-600 mt-2" data-name="err" data-file="checkout-app.js">{errors.phone}</div> : null}
                   </div>
 
@@ -237,6 +240,12 @@ function CheckoutApp() {
                         {t(lang, 'checkoutPickupHint')}
                       </div>
                     ) : null}
+                  </div>
+
+                  <div data-name="date" data-file="checkout-app.js">
+                    <label className="text-sm font-semibold text-[var(--muted-text-color)]" data-name="label" data-file="checkout-app.js">{t(lang, 'checkoutDate')}</label>
+                    <input className="input mt-2" type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} min={getTodayISO()} data-name="input" data-file="checkout-app.js" />
+                    {errors.date ? <div className="text-xs text-rose-600 mt-2" data-name="err" data-file="checkout-app.js">{errors.date}</div> : null}
                   </div>
 
                   <div data-name="time" data-file="checkout-app.js">
@@ -343,6 +352,7 @@ function CheckoutApp() {
                         <div className="font-bold truncate" data-name="it-title" data-file="checkout-app.js">{it.title}</div>
                         <div className="text-xs text-[var(--muted-text-color)] mt-1" data-name="it-meta" data-file="checkout-app.js">
                           {it.options?.size ? (lang === 'en' ? `Size ${it.options.size}` : lang === 'el' ? `Μέγεθος ${it.options.size}` : `Размер ${it.options.size}`) : (lang === 'en' ? 'Standard' : lang === 'el' ? 'Στάνταρ' : 'Стандарт')}
+                          {it.options?.addons ? renderAddonsShort(it.options.addons) : ''}
                         </div>
                         <div className="mt-2 flex items-center gap-2" data-name="qty" data-file="checkout-app.js">
                           <button className="btn btn-ghost px-2 py-1" onClick={() => updateQty(it.key, -1)} data-name="dec" data-file="checkout-app.js">
@@ -357,7 +367,7 @@ function CheckoutApp() {
                           </button>
                         </div>
                       </div>
-                      <div className="text-sm font-extrabold" data-name="it-price" data-file="checkout-app.js">{formatMoney(it.lineTotal)}</div>
+                      <div className="text-sm font-extrabold" data-name="it-price" data-file="checkout-app.js">{formatRUB(it.lineTotal)}</div>
                     </div>
                   ))}
                 </div>
@@ -365,21 +375,40 @@ function CheckoutApp() {
                 <div className="mt-5 pt-4 border-t border-slate-200 space-y-2" data-name="pricing" data-file="checkout-app.js">
                   <div className="flex items-center justify-between text-sm" data-name="p1" data-file="checkout-app.js">
                     <span className="text-[var(--muted-text-color)]" data-name="cap" data-file="checkout-app.js">{t(lang, 'checkoutSubtotal')}</span>
-                    <span className="font-bold" data-name="val" data-file="checkout-app.js">{formatMoney(totals.subtotal)}</span>
+                    <span className="font-bold" data-name="val" data-file="checkout-app.js">{formatRUB(totals.subtotal)}</span>
                   </div>
                   <div className="flex items-center justify-between text-sm" data-name="p2" data-file="checkout-app.js">
                     <span className="text-[var(--muted-text-color)]" data-name="cap" data-file="checkout-app.js">{t(lang, 'checkoutShipping')}</span>
-                    <span className="font-bold" data-name="val" data-file="checkout-app.js">{shipping === 0 ? (lang === 'en' ? 'Free' : lang === 'el' ? 'Δωρεάν' : 'Бесплатно') : formatMoney(shipping)}</span>
+                    <span className="font-bold" data-name="val" data-file="checkout-app.js">{shipping === 0 ? (lang === 'en' ? 'Free' : lang === 'el' ? 'Δωρεάν' : 'Бесплатно') : formatRUB(shipping)}</span>
                   </div>
-                  <div className="hidden" data-name="p3" data-file="checkout-app.js"></div>
+                  <div className="flex items-center justify-between text-sm" data-name="p3" data-file="checkout-app.js">
+                    <span className="text-[var(--muted-text-color)]" data-name="cap" data-file="checkout-app.js">{t(lang, 'checkoutDiscount')}</span>
+                    <span className="font-bold text-emerald-700" data-name="val" data-file="checkout-app.js">− {formatRUB(discount)}</span>
+                  </div>
                   <div className="flex items-center justify-between pt-2 border-t border-slate-200" data-name="p4" data-file="checkout-app.js">
                     <span className="font-extrabold" data-name="cap" data-file="checkout-app.js">{t(lang, 'checkoutTotal')}</span>
-                    <span className="text-xl font-extrabold" data-name="val" data-file="checkout-app.js">{formatMoney(total)}</span>
+                    <span className="text-xl font-extrabold" data-name="val" data-file="checkout-app.js">{formatRUB(total)}</span>
                   </div>
                   <div className="text-xs text-[var(--muted-text-color)]" data-name="hint" data-file="checkout-app.js">
-                    {lang === 'en' ? 'Shipping is calculated at checkout.' : lang === 'el' ? 'Τα έξοδα παράδοσης υπολογίζούνται στο checkout.' : 'Стоимость доставки рассчитывается при оформлении.'}
+                    {t(lang, 'checkoutFreeShippingHint')}
                   </div>
                 </div>
+              </div>
+
+              <div className="card p-5" data-name="chart-card" data-file="checkout-app.js">
+                <div className="flex items-start justify-between" data-name="ch-head" data-file="checkout-app.js">
+                  <div data-name="ch-left" data-file="checkout-app.js">
+                    <div className="text-sm font-extrabold" data-name="ch-title" data-file="checkout-app.js">{t(lang, 'checkoutChartTitle')}</div>
+                    <div className="text-xs text-[var(--muted-text-color)] mt-1" data-name="ch-sub" data-file="checkout-app.js">{t(lang, 'checkoutChartSub')}</div>
+                  </div>
+                  <div className="w-10 h-10 rounded-xl bg-slate-900 flex items-center justify-center" data-name="ch-iwrap" data-file="checkout-app.js">
+                    <div className="icon-chart-bar text-xl text-white" data-name="ch-i" data-file="checkout-app.js"></div>
+                  </div>
+                </div>
+                <div className="mt-4" data-name="chart" data-file="checkout-app.js">
+                  <canvas id="priceChart" height="130" data-name="canvas" data-file="checkout-app.js"></canvas>
+                </div>
+                <CheckoutChartController subtotal={totals.subtotal} shipping={shipping} discount={discount} />
               </div>
             </aside>
           </div>
@@ -419,14 +448,10 @@ function CheckoutApp() {
                 <div className="text-sm text-[var(--muted-text-color)]" data-name="order-cap" data-file="checkout-app.js">{t(lang, 'checkoutOrderId')}</div>
                 <div className="text-lg font-extrabold mt-1" data-name="order-id" data-file="checkout-app.js">{lastOrder.orderId}</div>
                 <div className="text-sm text-[var(--muted-text-color)] mt-2" data-name="order-when" data-file="checkout-app.js">
-                  {lang === 'en'
-                    ? `Delivery time: ${lastOrder.form.time}`
-                    : lang === 'el'
-                      ? `Ώρα παράδοσης: ${lastOrder.form.time}`
-                      : `Время доставки: ${lastOrder.form.time}`}
+                  {t(lang, 'checkoutDeliveryWhen', { date: formatDateByLang(lastOrder.form.date, lang), time: lastOrder.form.time })}
                 </div>
                 <div className="text-sm text-[var(--muted-text-color)] mt-1" data-name="order-total" data-file="checkout-app.js">
-                  {t(lang, 'checkoutFinal', { sum: formatMoney(lastOrder.pricing.total) })}
+                  {t(lang, 'checkoutFinal', { sum: formatRUB(lastOrder.pricing.total) })}
                 </div>
               </div>
             ) : null}
@@ -471,11 +496,11 @@ function usePriceChart({ subtotal, shipping, discount }) {
         window.__priceChart = new ChartJS(ctx, {
           type: 'bar',
           data: {
-            labels: ['Subtotal', 'Delivery'],
+            labels: ['Subtotal', 'Delivery', 'Discount'],
             datasets: [
               {
-                data: [subtotal, shipping],
-                backgroundColor: ['#0F172A', '#E11D48'],
+                data: [subtotal, shipping, Math.max(0, discount)],
+                backgroundColor: ['#0F172A', '#E11D48', '#16A34A'],
                 borderRadius: 8
               }
             ]

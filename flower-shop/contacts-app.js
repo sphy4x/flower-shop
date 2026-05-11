@@ -62,8 +62,8 @@ function ContactsApp() {
         <Header variant="contacts" cartCount={totals.itemsCount} onCartClick={() => setCartOpen(true)} lang={lang} onLangChange={setLang} />
 
         <main className="container-shell py-8" data-name="main" data-file="contacts-app.js">
-          <div className="grid grid-cols-1 gap-6" data-name="layout" data-file="contacts-app.js">
-            <section className="space-y-6" data-name="left" data-file="contacts-app.js">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6" data-name="layout" data-file="contacts-app.js">
+            <section className="lg:col-span-2 space-y-6" data-name="left" data-file="contacts-app.js">
               <div className="card p-5" data-name="top" data-file="contacts-app.js">
                 <div className="flex items-start justify-between gap-4" data-name="head" data-file="contacts-app.js">
                   <div data-name="head-left" data-file="contacts-app.js">
@@ -102,7 +102,7 @@ function ContactsApp() {
                       {t(lang, 'contactsAddress')}
                     </div>
                     <div className="font-bold mt-2" data-name="addr" data-file="contacts-app.js">Leof. Andrea Papandreou 10, Neapoli 567 27</div>
-                    
+                    <div className="text-xs text-[var(--muted-text-color)] mt-2" data-name="note" data-file="contacts-app.js">{lang === 'en' ? 'Pickup is free.' : lang === 'el' ? 'Δωρεάν παραλαβή.' : 'Самовывоз без доплат.'}</div>
                   </div>
 
                   <div className="p-4 rounded-2xl border border-slate-200 bg-white" data-name="card4" data-file="contacts-app.js">
@@ -126,54 +126,55 @@ function ContactsApp() {
                     <div className="icon-map text-xl text-white" data-name="map-i" data-file="contacts-app.js"></div>
                   </div>
                 </div>
-
                 <div className="mt-4 rounded-2xl border border-slate-200 overflow-hidden bg-slate-50" data-name="map-box" data-file="contacts-app.js">
-                  <div className="w-full h-[260px]" data-name="map-embed" data-file="contacts-app.js">
-                    <iframe
-                      title="Art Passaion map"
-                      className="w-full h-full"
-                      src="https://www.openstreetmap.org/export/embed.html?bbox=22.9312866%2C40.6477688%2C22.9432866%2C40.6537688&amp;layer=mapnik&amp;marker=40.6507688%2C22.9372866"
-                      loading="lazy"
-                      referrerPolicy="no-referrer-when-downgrade"
-                      data-name="iframe"
-                      data-file="contacts-app.js"
-                    ></iframe>
-                  </div>
-                </div>
-
-                <div className="mt-3 flex flex-col sm:flex-row sm:items-center gap-2" data-name="map-actions" data-file="contacts-app.js">
-                  <a
-                    className="btn btn-secondary"
-                    href="https://www.openstreetmap.org/?mlat=40.6507688&mlon=22.9372866#map=18/40.6507688/22.9372866"
-                    target="_blank"
-                    rel="noreferrer"
-                    data-name="map-open-osm"
-                    data-file="contacts-app.js"
-                  >
-                    <div className="icon-external-link text-lg" data-name="map-open-i" data-file="contacts-app.js"></div>
-                    {lang === 'en' ? 'Open map' : lang === 'el' ? 'Άνοιγμα χάρτη' : 'Открыть карту'}
-                  </a>
-
-                  <a
-                    className="btn btn-ghost"
-                    href="https://www.google.com/maps/search/?api=1&query=Leof.%20Andrea%20Papandreou%2010%2C%20Neapoli%20567%2027"
-                    target="_blank"
-                    rel="noreferrer"
-                    data-name="map-open-google"
-                    data-file="contacts-app.js"
-                  >
-                    <div className="icon-map-pin text-lg" data-name="map-open2-i" data-file="contacts-app.js"></div>
-                    {lang === 'en' ? 'Directions' : lang === 'el' ? 'Οδηγίες' : 'Маршрут'}
-                  </a>
-
-                  <div className="text-xs text-[var(--muted-text-color)] sm:ml-auto" data-name="map-hint" data-file="contacts-app.js">
-                    40.6507688, 22.9372866
+                  <div className="h-[240px] flex items-center justify-center text-[var(--muted-text-color)]" data-name="map-ph" data-file="contacts-app.js">
+                    {t(lang, 'contactsMapPlaceholder')}
                   </div>
                 </div>
               </div>
             </section>
 
+            <aside className="space-y-6" data-name="right" data-file="contacts-app.js">
+              <div className="card p-5" data-name="quick" data-file="contacts-app.js">
+                <div className="flex items-start justify-between" data-name="qh" data-file="contacts-app.js">
+                  <div data-name="qh-left" data-file="contacts-app.js">
+                    <div className="text-sm font-extrabold" data-name="qh-title" data-file="contacts-app.js">{t(lang, 'contactsQuick')}</div>
+                    <div className="text-xs text-[var(--muted-text-color)] mt-1" data-name="qh-sub" data-file="contacts-app.js">{t(lang, 'contactsQuickSub')}</div>
+                  </div>
+                  <div className="w-10 h-10 rounded-xl bg-rose-50 flex items-center justify-center" data-name="qh-iwrap" data-file="contacts-app.js">
+                    <div className="icon-zap text-xl text-[var(--primary-color)]" data-name="qh-i" data-file="contacts-app.js"></div>
+                  </div>
+                </div>
 
+                <div className="mt-4 grid grid-cols-1 gap-2" data-name="quick-grid" data-file="contacts-app.js">
+                  {quick.map((q) => (
+                    <button key={q.label} className="btn btn-ghost w-full justify-start" onClick={q.action} data-name="quick-btn" data-file="contacts-app.js">
+                      <div className={q.icon + ' text-lg'} data-name="q-i" data-file="contacts-app.js"></div>
+                      {q.label}
+                      <div className="icon-external-link text-lg ml-auto" data-name="q-ext" data-file="contacts-app.js"></div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="card p-5" data-name="hint" data-file="contacts-app.js">
+                <div className="flex items-start gap-3" data-name="hint-row" data-file="contacts-app.js">
+                  <div className="w-12 h-12 rounded-2xl bg-slate-900 flex items-center justify-center" data-name="h-iwrap" data-file="contacts-app.js">
+                    <div className="icon-flower-2 text-2xl text-white" data-name="h-i" data-file="contacts-app.js"></div>
+                  </div>
+                  <div data-name="h-text" data-file="contacts-app.js">
+                    <div className="font-extrabold" data-name="h-title" data-file="contacts-app.js">{t(lang, 'contactsHintTitle')}</div>
+                    <div className="text-sm text-[var(--muted-text-color)] mt-1" data-name="h-desc" data-file="contacts-app.js">
+                      {t(lang, 'contactsHintDesc')}
+                    </div>
+                    <button className="btn btn-primary mt-3" onClick={() => (window.location.href = 'catalog.html')} data-name="h-btn" data-file="contacts-app.js">
+                      {t(lang, 'contactsHintBtn')}
+                      <div className="icon-arrow-right text-lg" data-name="h-btn-i" data-file="contacts-app.js"></div>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </aside>
           </div>
         </main>
 

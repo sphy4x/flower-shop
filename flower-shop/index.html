@@ -4,13 +4,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <title>Букет — Art Passaion</title>
-  <meta name="description" content="Подробности букета Art Passaion: состав, уход, доставка, варианты размеров и добавок. Добавьте в корзину и оформите заказ." />
-  <meta name="keywords" content="букет, состав букета, купить букет, доставка цветов, Art Passaion" />
-  <meta property="og:title" content="Букет — Art Passaion" />
-  <meta property="og:description" content="Подробности, фото и рекомендации по уходу — и удобное оформление заказа." />
-  <meta name="twitter:title" content="Букет — Art Passaion" />
-  <meta name="twitter:description" content="Подробности, фото и рекомендации по уходу — и удобное оформление заказа." />
+  <title>Art Passaion — Цветы и букеты с доставкой</title>
+  <meta name="description" content="Art Passaion — магазин цветов: авторские букеты, композиции и доставка в день заказа. Выберите букет, добавьте открытку и оформите заказ онлайн." />
+  <meta name="keywords" content="цветы, букеты, доставка цветов, магазин цветов, розы, тюльпаны, композиции, Art Passaion" />
+  <meta property="og:title" content="Art Passaion — Цветы и букеты с доставкой" />
+  <meta property="og:description" content="Авторские букеты и композиции с быстрой доставкой. Закажите онлайн за пару минут." />
+  <meta name="twitter:title" content="Art Passaion — Цветы и букеты с доставкой" />
+  <meta name="twitter:description" content="Авторские букеты и композиции с быстрой доставкой. Закажите онлайн за пару минут." />
 
   <script src="https://resource.trickle.so/vendor_lib/unpkg/react@18/umd/react.production.min.js"></script>
   <script src="https://resource.trickle.so/vendor_lib/unpkg/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -25,16 +25,16 @@
   <style type="text/tailwindcss">
     @layer theme {
       :root {
-        --primary-color: #E11D48;
-        --secondary-color: #0F172A;
+        --primary-color: #E11D48; /* rose-600 */
+        --secondary-color: #0F172A; /* slate-900 */
         --surface-color: #FFFFFF;
-        --muted-surface-color: #F8FAFC;
-        --text-color: #0F172A;
-        --muted-text-color: #475569;
-        --border-color: #E2E8F0;
-        --success-color: #16A34A;
-        --warning-color: #F59E0B;
-        --danger-color: #DC2626;
+        --muted-surface-color: #F8FAFC; /* slate-50 */
+        --text-color: #0F172A; /* slate-900 */
+        --muted-text-color: #475569; /* slate-600 */
+        --border-color: #E2E8F0; /* slate-200 */
+        --success-color: #16A34A; /* green-600 */
+        --warning-color: #F59E0B; /* amber-500 */
+        --danger-color: #DC2626; /* red-600 */
 
         --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.08);
         --shadow-md: 0 12px 30px rgba(15, 23, 42, 0.12);
@@ -47,10 +47,12 @@
     }
 
     @layer base {
+      html { scroll-behavior: smooth; }
       body {
         @apply bg-[var(--muted-surface-color)] text-[var(--text-color)] antialiased;
         font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
       }
+      a { @apply text-[var(--text-color)]; }
     }
 
     @layer components {
@@ -67,31 +69,32 @@
       .btn-primary { @apply bg-[var(--primary-color)] text-white hover:opacity-95; }
       .btn-secondary { @apply bg-[var(--secondary-color)] text-white hover:opacity-95; }
       .btn-ghost { @apply bg-white border border-[var(--border-color)] hover:bg-slate-50; }
+      .badge {
+        @apply inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold;
+        border-radius: 999px;
+      }
       .input {
         @apply w-full px-3 py-2 bg-white border border-[var(--border-color)] outline-none focus:ring-2 focus:ring-[var(--primary-color)] focus:ring-opacity-30;
         border-radius: var(--radius-sm);
       }
       .link-muted { @apply text-[var(--muted-text-color)] hover:text-[var(--text-color)] transition; }
-      .badge {
-        @apply inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold;
-        border-radius: 999px;
-      }
+    }
+
+    @layer utilities {
+      .shadow-soft { box-shadow: var(--shadow-md); }
     }
   </style>
 </head>
 
 <body>
-  <div id="root" data-name="root" data-file="product.html"></div>
+  <div id="root" data-name="root" data-file="index.html"></div>
 
   <script type="text/babel" src="utils/devDiagnostics.js"></script>
   <script type="text/babel" src="utils/format.js"></script>
-  <script type="text/babel" src="utils/currency.js"></script>
   <script type="text/babel" src="utils/storage.js"></script>
   <script type="text/babel" src="utils/navigation.js"></script>
   <script type="text/babel" src="utils/i18n.js"></script>
   <script type="text/babel" src="utils/products.js"></script>
-  <script type="text/babel" src="utils/externalLinks.js"></script>
-  <script type="text/babel" src="utils/externalLinks.js"></script>
 
   <script type="text/babel" src="components/Toast.js"></script>
   <script type="text/babel" src="components/Modal.js"></script>
@@ -101,6 +104,12 @@
   <script type="text/babel" src="components/ProductCard.js"></script>
   <script type="text/babel" src="components/CartDrawer.js"></script>
 
-  <script type="text/babel" src="product-app.js"></script>
+  <script type="text/babel" src="sections/HomeHero.js"></script>
+  <script type="text/babel" src="sections/HomeFeatured.js"></script>
+  <script type="text/babel" src="sections/HomeBenefits.js"></script>
+  <script type="text/babel" src="sections/HomeReviews.js"></script>
+  <script type="text/babel" src="sections/HomeFAQ.js"></script>
+
+  <script type="text/babel" src="app.js"></script>
 </body>
 </html>

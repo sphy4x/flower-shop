@@ -20,7 +20,7 @@ function HomeFeatured({ products, onAdd, lang }) {
             <ProductCard
               key={p.id}
               product={p}
-              onOpen={() => openProductOrExternal(p, `product.html?id=${encodeURIComponent(p.id)}`)}
+              onOpen={() => (window.location.href = `product.html?id=${encodeURIComponent(p.id)}`)}
               onAdd={() => onAdd(p)}
               dataFile="sections/HomeFeatured.js"
               lang={l}
