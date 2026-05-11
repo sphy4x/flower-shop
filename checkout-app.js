@@ -102,7 +102,6 @@ function CheckoutApp() {
       try {
         const e = {};
         if (totals.itemsCount <= 0) e.cart = t(lang, 'checkoutCartEmptyDesc');
-
         if (!form.name.trim()) {
           e.name = lang === 'en'
             ? 'Please enter your name.'
@@ -110,7 +109,6 @@ function CheckoutApp() {
               ? 'Συμπλήρωσε όνομα.'
               : 'Укажите имя.';
         }
-
         if (!isValidPhoneGR(form.phone)) {
           e.phone = lang === 'en'
             ? 'Enter a Greek phone number in +30 format (demo).'
@@ -118,7 +116,6 @@ function CheckoutApp() {
               ? 'Βάλε ελληνικό τηλέφωνο σε μορφή +30 (demo).'
               : 'Введите греческий телефон в формате +30 (demo).';
         }
-
         if (form.delivery !== 'Pickup' && form.delivery !== 'Самовывоз' && !form.address.trim()) {
           e.address = lang === 'en'
             ? 'Enter delivery address.'
@@ -126,7 +123,6 @@ function CheckoutApp() {
               ? 'Συμπλήρωσε διεύθυνση.'
               : 'Укажите адрес доставки.';
         }
-
         if (!form.time) {
           e.time = lang === 'en'
             ? 'Select a time slot.'
@@ -134,7 +130,6 @@ function CheckoutApp() {
               ? 'Διάλεξε ώρα.'
               : 'Выберите время.';
         }
-
         return e;
       } catch (error) {
         console.error('Checkout validation error:', error);
@@ -152,15 +147,13 @@ function CheckoutApp() {
 
     const buildOrderItemsText = (items) => {
       return items.map((it, index) => {
-        const sizeText = it.options?.size
-          ? `${lang === 'en' ? 'Size' : lang === 'el' ? 'Μέγεθος' : 'Размер'}: ${it.options.size}`
-          : (lang === 'en' ? 'Standard' : lang === 'el' ? 'Στάνταρ' : 'Стандарт');
+        const sizeText = it.options?.size ? `Размер: ${it.options.size}` : 'Стандарт';
 
         return `${index + 1}. ${it.title}
-   ${lang === 'en' ? 'Quantity' : lang === 'el' ? 'Ποσότητα' : 'Количество'}: ${it.qty}
-   ${sizeText}
-   ${lang === 'en' ? 'Photo' : lang === 'el' ? 'Φωτογραφία' : 'Фото'}: ${it.image || '-'}
-   ${lang === 'en' ? 'Line total' : lang === 'el' ? 'Σύνολο позиции' : 'Сумма позиции'}: ${formatMoney(it.lineTotal)}`;
+Количество: ${it.qty}
+${sizeText}
+Фото: ${it.image || '-'}
+Сумма позиции: ${formatMoney(it.lineTotal)}`;
       }).join('\n\n');
     };
 
@@ -220,6 +213,10 @@ ${buildOrderItemsText(order.items)}
 
         const message = buildOrderMessage(order);
 
+        console.log('ORDER_TO_SEND', order);
+        console.log('MESSAGE_TO_SEND', message);
+        console.log('FORMSPREE_ENDPOINT', FORMSPREE_ENDPOINT);
+
         const response = await fetch(FORMSPREE_ENDPOINT, {
           method: 'POST',
           headers: {
@@ -240,8 +237,13 @@ ${buildOrderItemsText(order.items)}
           })
         });
 
+        console.log('FORMSPREE_STATUS', response.status);
+
+        const responseText = await response.text();
+        console.log('FORMSPREE_RESPONSE_TEXT', responseText);
+
         if (!response.ok) {
-          throw new Error(`Formspree error: ${response.status}`);
+          throw new Error(`Formspree error: ${response.status} ${responseText}`);
         }
 
         setLastOrder(order);
