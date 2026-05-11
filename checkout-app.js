@@ -35,6 +35,7 @@ class ErrorBoundary extends React.Component {
 function CheckoutApp() {
   try {
     const FORMSPREE_ENDPOINT = 'https://formspree.io/f/maqvaayk';
+    const CARD_IBAN = 'GR5001102240000022401224591';
 
     const [cartOpen, setCartOpen] = React.useState(false);
     const [toast, setToast] = React.useState({ open: false, title: '', message: '', type: 'info' });
@@ -158,6 +159,13 @@ ${sizeText}
     };
 
     const buildOrderMessage = (order) => {
+      const ibanBlock = order.form.paymentKey === 'card-transfer'
+        ? `
+
+IBAN для оплаты:
+${CARD_IBAN}`
+        : '';
+
       return `
 Новый заказ: ${order.orderId}
 
@@ -179,7 +187,7 @@ ${buildOrderItemsText(order.items)}
 Итого по заказу:
 Товары: ${formatMoney(order.pricing.subtotal)}
 Доставка: ${order.pricing.shipping === 0 ? 'Бесплатно' : formatMoney(order.pricing.shipping)}
-К оплате: ${formatMoney(order.pricing.total)}
+К оплате: ${formatMoney(order.pricing.total)}${ibanBlock}
       `.trim();
     };
 
@@ -231,6 +239,7 @@ ${buildOrderItemsText(order.items)}
             address: order.form.address || '-',
             time: order.form.time,
             payment: order.form.payment,
+            paymentKey: order.form.paymentKey,
             comment: order.form.comment || '-',
             message: message,
             _subject: `Новый заказ ${order.orderId} — Art Passaion`
@@ -600,8 +609,14 @@ ${buildOrderItemsText(order.items)}
 
             {lastOrder ? (
               <div className="p-4 rounded-2xl bg-white border border-slate-200" data-name="order" data-file="checkout-app.js">
-                <div className="text-sm text-[var(--muted-text-color)]" data-name="order-cap" data-file="checkout-app.js">{t(lang, 'checkoutOrderId')}</div>
-                <div className="text-lg font-extrabold mt-1" data-name="order-id" data-file="checkout-app.js">{lastOrder.orderId}</div>
+                <div className="text-sm text-[var(--muted-text-color)]" data-name="order-cap" data-file="checkout-app.js">
+                  {t(lang, 'checkoutOrderId')}
+                </div>
+
+                <div className="text-lg font-extrabold mt-1" data-name="order-id" data-file="checkout-app.js">
+                  {lastOrder.orderId}
+                </div>
+
                 <div className="text-sm text-[var(--muted-text-color)] mt-2" data-name="order-when" data-file="checkout-app.js">
                   {lang === 'en'
                     ? `Delivery time: ${lastOrder.form.time}`
@@ -609,9 +624,38 @@ ${buildOrderItemsText(order.items)}
                       ? `Ώρα παράδοσης: ${lastOrder.form.time}`
                       : `Время доставки: ${lastOrder.form.time}`}
                 </div>
+
                 <div className="text-sm text-[var(--muted-text-color)] mt-1" data-name="order-total" data-file="checkout-app.js">
                   {t(lang, 'checkoutFinal', { sum: formatMoney(lastOrder.pricing.total) })}
                 </div>
+
+                {lastOrder.form.paymentKey === 'card-transfer' ? (
+                  <div
+                    className="mt-4 p-4 rounded-xl border border-rose-200 bg-rose-50"
+                    data-name="iban-box"
+                    data-file="checkout-app.js"
+                  >
+                    <div
+                      className="text-sm font-semibold text-slate-800"
+                      data-name="iban-title"
+                      data-file="checkout-app.js"
+                    >
+                      {lang === 'en'
+                        ? 'IBAN for payment:'
+                        : lang === 'el'
+                          ? 'IBAN για πληρωμή:'
+                          : 'IBAN для оплаты:'}
+                    </div>
+
+                    <div
+                      className="mt-2 text-base font-extrabold break-all text-[var(--primary-color)]"
+                      data-name="iban-value"
+                      data-file="checkout-app.js"
+                    >
+                      {CARD_IBAN}
+                    </div>
+                  </div>
+                ) : null}
               </div>
             ) : null}
 
