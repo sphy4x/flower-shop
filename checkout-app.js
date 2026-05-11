@@ -102,14 +102,44 @@ function CheckoutApp() {
       try {
         const e = {};
         if (totals.itemsCount <= 0) e.cart = t(lang, 'checkoutCartEmptyDesc');
-        if (!form.name.trim()) e.name = lang === 'en' ? 'Please enter your name.' : lang === 'el' ? 'Συμπλήρωσε όνομα.' : 'Укажите имя.';
-        if (!isValidPhoneGR(form.phone)) e.phone = lang === 'en' ? 'Enter a Greek phone number in +30 format (demo).' : lang === 'el' ? 'Βάλε ελληνικό τηλέφωνο σε μορφή +30 (demo).' : 'Введите греческий телефон в формате +30 (demo).';
-        if (form.delivery !== 'Pickup' && form.delivery !== 'Самовывоз' && !form.address.trim()) e.address = lang === 'en' ? 'Enter delivery address.' : lang === 'el' ? 'Συμπλήρωσε διεύθυνση.' : 'Укажите адрес доставки.';
-        if (!form.time) e.time = lang === 'en' ? 'Select a time slot.' : lang === 'el' ? 'Διάλεξε ώρα.' : 'Выберите время.';
+        if (!form.name.trim()) {
+          e.name = lang === 'en'
+            ? 'Please enter your name.'
+            : lang === 'el'
+              ? 'Συμπλήρωσε όνομα.'
+              : 'Укажите имя.';
+        }
+        if (!isValidPhoneGR(form.phone)) {
+          e.phone = lang === 'en'
+            ? 'Enter a Greek phone number in +30 format (demo).'
+            : lang === 'el'
+              ? 'Βάλε ελληνικό τηλέφωνο σε μορφή +30 (demo).'
+              : 'Введите греческий телефон в формате +30 (demo).';
+        }
+        if (form.delivery !== 'Pickup' && form.delivery !== 'Самовывоз' && !form.address.trim()) {
+          e.address = lang === 'en'
+            ? 'Enter delivery address.'
+            : lang === 'el'
+              ? 'Συμπλήρωσε διεύθυνση.'
+              : 'Укажите адрес доставки.';
+        }
+        if (!form.time) {
+          e.time = lang === 'en'
+            ? 'Select a time slot.'
+            : lang === 'el'
+              ? 'Διάλεξε ώρα.'
+              : 'Выберите время.';
+        }
         return e;
       } catch (error) {
         console.error('Checkout validation error:', error);
-        return { cart: lang === 'en' ? 'Could not validate. Please try again.' : lang === 'el' ? 'Δεν ήταν δυνατός ο έλεγχος. Δοκίμασε ξανά.' : 'Не удалось проверить форму. Попробуйте ещё раз.' };
+        return {
+          cart: lang === 'en'
+            ? 'Could not validate. Please try again.'
+            : lang === 'el'
+              ? 'Δεν ήταν δυνατός ο έλεγχος. Δοκίμασε ξανά.'
+              : 'Не удалось проверить форму. Попробуйте ещё раз.'
+        };
       }
     }, [form, totals.itemsCount, lang]);
 
@@ -124,30 +154,34 @@ function CheckoutApp() {
         return `${index + 1}. ${it.title}
    ${lang === 'en' ? 'Quantity' : lang === 'el' ? 'Ποσότητα' : 'Количество'}: ${it.qty}
    ${sizeText}
+   ${lang === 'en' ? 'Photo' : lang === 'el' ? 'Φωτογραφία' : 'Фото'}: ${it.image || '-'}
    ${lang === 'en' ? 'Line total' : lang === 'el' ? 'Σύνολο θέσης' : 'Сумма позиции'}: ${formatMoney(it.lineTotal)}`;
       }).join('\n\n');
     };
 
     const buildOrderMessage = (order) => {
       return `
-Order ID: ${order.orderId}
-Created at: ${order.createdAt}
+Новый заказ: ${order.orderId}
 
-Customer name: ${order.form.name}
-Phone: ${order.form.phone}
-City: ${order.form.city}
-Delivery method: ${order.form.delivery}
-Address: ${order.form.address || '-'}
-Time slot: ${order.form.time}
-Payment: ${order.form.payment}
-Comment: ${order.form.comment || '-'}
+Дата: ${order.createdAt}
 
-Items:
+Данные клиента:
+Имя: ${order.form.name}
+Телефон: ${order.form.phone}
+Город: ${order.form.city}
+Способ доставки: ${order.form.delivery}
+Адрес: ${order.form.address || '-'}
+Время доставки: ${order.form.time}
+Способ оплаты: ${order.form.payment}
+Комментарий: ${order.form.comment || '-'}
+
+Состав заказа:
 ${buildOrderItemsText(order.items)}
 
-Subtotal: ${formatMoney(order.pricing.subtotal)}
-Shipping: ${order.pricing.shipping === 0 ? 'Free' : formatMoney(order.pricing.shipping)}
-Total: ${formatMoney(order.pricing.total)}
+Итого по заказу:
+Товары: ${formatMoney(order.pricing.subtotal)}
+Доставка: ${order.pricing.shipping === 0 ? 'Бесплатно' : formatMoney(order.pricing.shipping)}
+К оплате: ${formatMoney(order.pricing.total)}
       `.trim();
     };
 
@@ -188,20 +222,6 @@ Total: ${formatMoney(order.pricing.total)}
             'Accept': 'application/json'
           },
           body: JSON.stringify({
-            orderId: order.orderId,
-            createdAt: order.createdAt,
-            customerName: order.form.name,
-            phone: order.form.phone,
-            city: order.form.city,
-            delivery: order.form.delivery,
-            address: order.form.address || '-',
-            time: order.form.time,
-            payment: order.form.payment,
-            comment: order.form.comment || '-',
-            subtotal: formatMoney(order.pricing.subtotal),
-            shipping: order.pricing.shipping === 0 ? 'Free' : formatMoney(order.pricing.shipping),
-            total: formatMoney(order.pricing.total),
-            itemsCount: order.items.length,
             message: message,
             _subject: `Новый заказ ${order.orderId} — Art Passaion`
           })
@@ -218,7 +238,11 @@ Total: ${formatMoney(order.pricing.total)}
         setToast({
           open: true,
           title: lang === 'en' ? 'Order sent' : lang === 'el' ? 'Η παραγγελία στάλθηκε' : 'Заказ отправлен',
-          message: lang === 'en' ? 'Your order has been successfully sent.' : lang === 'el' ? 'Η παραγγελία στάλθηκε με επιτυχία.' : 'Ваш заказ успешно отправлен.',
+          message: lang === 'en'
+            ? 'Your order has been successfully sent.'
+            : lang === 'el'
+              ? 'Η παραγγελία στάλθηκε με επιτυχία.'
+              : 'Ваш заказ успешно отправлен.',
           type: 'success'
         });
       } catch (error) {
@@ -275,7 +299,14 @@ Total: ${formatMoney(order.pricing.total)}
                 <div className="mt-5 grid grid-cols-1 md:grid-cols-2 gap-4" data-name="grid" data-file="checkout-app.js">
                   <div data-name="name" data-file="checkout-app.js">
                     <label className="text-sm font-semibold text-[var(--muted-text-color)]" data-name="label" data-file="checkout-app.js">{t(lang, 'checkoutName')}</label>
-                    <input className="input mt-2" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder={lang === 'en' ? 'Anna' : lang === 'el' ? 'Άννα' : 'Анастасия'} data-name="input" data-file="checkout-app.js" />
+                    <input
+                      className="input mt-2"
+                      value={form.name}
+                      onChange={(e) => setForm({ ...form, name: e.target.value })}
+                      placeholder={lang === 'en' ? 'Anna' : lang === 'el' ? 'Άννα' : 'Анастасия'}
+                      data-name="input"
+                      data-file="checkout-app.js"
+                    />
                     {errors.name ? <div className="text-xs text-rose-600 mt-2" data-name="err" data-file="checkout-app.js">{errors.name}</div> : null}
                   </div>
 
@@ -295,7 +326,13 @@ Total: ${formatMoney(order.pricing.total)}
 
                   <div data-name="city" data-file="checkout-app.js">
                     <label className="text-sm font-semibold text-[var(--muted-text-color)]" data-name="label" data-file="checkout-app.js">{t(lang, 'checkoutCity')}</label>
-                    <select className="input mt-2" value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} data-name="select" data-file="checkout-app.js">
+                    <select
+                      className="input mt-2"
+                      value={form.city}
+                      onChange={(e) => setForm({ ...form, city: e.target.value })}
+                      data-name="select"
+                      data-file="checkout-app.js"
+                    >
                       {(lang === 'el'
                         ? ['Θεσσαλονίκη', 'Αθήνα', 'Καβάλα', 'Ιωάννινα']
                         : ['Neapoli', 'Thessaloniki', 'Athens', 'Kavala']
@@ -307,7 +344,13 @@ Total: ${formatMoney(order.pricing.total)}
 
                   <div data-name="delivery" data-file="checkout-app.js">
                     <label className="text-sm font-semibold text-[var(--muted-text-color)]" data-name="label" data-file="checkout-app.js">{t(lang, 'checkoutDelivery')}</label>
-                    <select className="input mt-2" value={form.delivery} onChange={(e) => setForm({ ...form, delivery: e.target.value })} data-name="select" data-file="checkout-app.js">
+                    <select
+                      className="input mt-2"
+                      value={form.delivery}
+                      onChange={(e) => setForm({ ...form, delivery: e.target.value })}
+                      data-name="select"
+                      data-file="checkout-app.js"
+                    >
                       {(lang === 'en'
                         ? ['Courier', 'Pickup']
                         : lang === 'el'
@@ -340,8 +383,16 @@ Total: ${formatMoney(order.pricing.total)}
 
                   <div data-name="time" data-file="checkout-app.js">
                     <label className="text-sm font-semibold text-[var(--muted-text-color)]" data-name="label" data-file="checkout-app.js">{t(lang, 'checkoutTime')}</label>
-                    <select className="input mt-2" value={form.time} onChange={(e) => setForm({ ...form, time: e.target.value })} data-name="select" data-file="checkout-app.js">
-                      <option value="" data-name="option" data-file="checkout-app.js">{lang === 'en' ? 'Select' : lang === 'el' ? 'Επιλογή' : 'Выберите'}</option>
+                    <select
+                      className="input mt-2"
+                      value={form.time}
+                      onChange={(e) => setForm({ ...form, time: e.target.value })}
+                      data-name="select"
+                      data-file="checkout-app.js"
+                    >
+                      <option value="" data-name="option" data-file="checkout-app.js">
+                        {lang === 'en' ? 'Select' : lang === 'el' ? 'Επιλογή' : 'Выберите'}
+                      </option>
                       {getDeliverySlots().map((tSlot) => (
                         <option key={tSlot} value={tSlot} data-name="option" data-file="checkout-app.js">{tSlot}</option>
                       ))}
@@ -431,7 +482,9 @@ Total: ${formatMoney(order.pricing.total)}
                 <div className="flex items-start justify-between gap-4" data-name="sum-head" data-file="checkout-app.js">
                   <div data-name="sum-left" data-file="checkout-app.js">
                     <h2 className="text-lg font-extrabold" data-name="sum-title" data-file="checkout-app.js">{t(lang, 'checkoutYourOrder')}</h2>
-                    <p className="text-sm text-[var(--muted-text-color)] mt-1" data-name="sum-sub" data-file="checkout-app.js">{totals.itemsCount} {lang === 'en' ? 'items' : lang === 'el' ? 'είδη' : 'позиций'}</p>
+                    <p className="text-sm text-[var(--muted-text-color)] mt-1" data-name="sum-sub" data-file="checkout-app.js">
+                      {totals.itemsCount} {lang === 'en' ? 'items' : lang === 'el' ? 'είδη' : 'позиций'}
+                    </p>
                   </div>
                   <button className="btn btn-ghost" onClick={() => (window.location.href = 'catalog.html')} data-name="sum-add" data-file="checkout-app.js">
                     <div className="icon-square-plus text-lg" data-name="sum-add-i" data-file="checkout-app.js"></div>
@@ -450,7 +503,9 @@ Total: ${formatMoney(order.pricing.total)}
                       <div className="min-w-0 flex-1" data-name="it-mid" data-file="checkout-app.js">
                         <div className="font-bold truncate" data-name="it-title" data-file="checkout-app.js">{it.title}</div>
                         <div className="text-xs text-[var(--muted-text-color)] mt-1" data-name="it-meta" data-file="checkout-app.js">
-                          {it.options?.size ? (lang === 'en' ? `Size ${it.options.size}` : lang === 'el' ? `Μέγεθος ${it.options.size}` : `Размер ${it.options.size}`) : (lang === 'en' ? 'Standard' : lang === 'el' ? 'Στάνταρ' : 'Стандарт')}
+                          {it.options?.size
+                            ? (lang === 'en' ? `Size ${it.options.size}` : lang === 'el' ? `Μέγεθος ${it.options.size}` : `Размер ${it.options.size}`)
+                            : (lang === 'en' ? 'Standard' : lang === 'el' ? 'Στάνταρ' : 'Стандарт')}
                         </div>
                         <div className="mt-2 flex items-center gap-2" data-name="qty" data-file="checkout-app.js">
                           <button className="btn btn-ghost px-2 py-1" onClick={() => updateQty(it.key, -1)} data-name="dec" data-file="checkout-app.js">
@@ -477,7 +532,9 @@ Total: ${formatMoney(order.pricing.total)}
                   </div>
                   <div className="flex items-center justify-between text-sm" data-name="p2" data-file="checkout-app.js">
                     <span className="text-[var(--muted-text-color)]" data-name="cap" data-file="checkout-app.js">{t(lang, 'checkoutShipping')}</span>
-                    <span className="font-bold" data-name="val" data-file="checkout-app.js">{shipping === 0 ? (lang === 'en' ? 'Free' : lang === 'el' ? 'Δωρεάν' : 'Бесплатно') : formatMoney(shipping)}</span>
+                    <span className="font-bold" data-name="val" data-file="checkout-app.js">
+                      {shipping === 0 ? (lang === 'en' ? 'Free' : lang === 'el' ? 'Δωρεάν' : 'Бесплатно') : formatMoney(shipping)}
+                    </span>
                   </div>
                   <div className="hidden" data-name="p3" data-file="checkout-app.js"></div>
                   <div className="flex items-center justify-between pt-2 border-t border-slate-200" data-name="p4" data-file="checkout-app.js">
@@ -485,7 +542,11 @@ Total: ${formatMoney(order.pricing.total)}
                     <span className="text-xl font-extrabold" data-name="val" data-file="checkout-app.js">{formatMoney(total)}</span>
                   </div>
                   <div className="text-xs text-[var(--muted-text-color)]" data-name="hint" data-file="checkout-app.js">
-                    {lang === 'en' ? 'Shipping is calculated at checkout.' : lang === 'el' ? 'Τα έξοδα παράδοσης υπολογίζούνται στο checkout.' : 'Стоимость доставки рассчитывается при оформлении.'}
+                    {lang === 'en'
+                      ? 'Shipping is calculated at checkout.'
+                      : lang === 'el'
+                        ? 'Τα έξοδα παράδοσης υπολογίζούνται στο checkout.'
+                        : 'Стоимость доставки рассчитывается при оформлении.'}
                   </div>
                 </div>
               </div>
@@ -552,7 +613,14 @@ Total: ${formatMoney(order.pricing.total)}
           </div>
         </Modal>
 
-        <Toast open={toast.open} title={toast.title} message={toast.message} type={toast.type} onClose={() => setToast({ open: false, title: '', message: '', type: 'info' })} lang={lang} />
+        <Toast
+          open={toast.open}
+          title={toast.title}
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast({ open: false, title: '', message: '', type: 'info' })}
+          lang={lang}
+        />
       </div>
     );
   } catch (error) {
