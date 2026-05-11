@@ -58,24 +58,6 @@ function Footer({ lang }) {
                 <div className="h-px bg-slate-100" data-name="sep3" data-file="components/Footer.js"></div>
                 <button className="link-muted text-left" onClick={() => navigateToPage('contacts.html')} data-name="l4" data-file="components/Footer.js">{t(l, 'footerContacts')}</button>
               </div>
-
-              <div className="mt-5 p-4 rounded-2xl bg-rose-50 border border-rose-200" data-name="demo" data-file="components/Footer.js">
-                <div className="flex items-start gap-3" data-name="demo-row" data-file="components/Footer.js">
-                  <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center border border-rose-200" data-name="demo-iwrap" data-file="components/Footer.js">
-                    <div className="icon-info text-xl text-rose-700" data-name="demo-i" data-file="components/Footer.js"></div>
-                  </div>
-                  <div data-name="demo-text" data-file="components/Footer.js">
-                    <div className="text-sm font-extrabold" data-name="demo-title" data-file="components/Footer.js">{t(l, 'footerDemo')}</div>
-                    <div className="text-xs text-rose-800/80 mt-1" data-name="demo-desc" data-file="components/Footer.js">
-                      {l === 'en'
-                        ? 'Orders are not processed in this demo.'
-                        : l === 'el'
-                          ? 'Σε αυτό το demo δεν γίνεται επεξεργασία παραγγελιών.'
-                          : 'В этом демо заказы не обрабатываются.'}
-                    </div>
-                  </div>
-                </div>
-              </div>
             </div>
 
             <div data-name="col3" data-file="components/Footer.js">
