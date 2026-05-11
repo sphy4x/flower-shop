@@ -102,6 +102,7 @@ function CheckoutApp() {
       try {
         const e = {};
         if (totals.itemsCount <= 0) e.cart = t(lang, 'checkoutCartEmptyDesc');
+
         if (!form.name.trim()) {
           e.name = lang === 'en'
             ? 'Please enter your name.'
@@ -109,6 +110,7 @@ function CheckoutApp() {
               ? 'Συμπλήρωσε όνομα.'
               : 'Укажите имя.';
         }
+
         if (!isValidPhoneGR(form.phone)) {
           e.phone = lang === 'en'
             ? 'Enter a Greek phone number in +30 format (demo).'
@@ -116,6 +118,7 @@ function CheckoutApp() {
               ? 'Βάλε ελληνικό τηλέφωνο σε μορφή +30 (demo).'
               : 'Введите греческий телефон в формате +30 (demo).';
         }
+
         if (form.delivery !== 'Pickup' && form.delivery !== 'Самовывоз' && !form.address.trim()) {
           e.address = lang === 'en'
             ? 'Enter delivery address.'
@@ -123,6 +126,7 @@ function CheckoutApp() {
               ? 'Συμπλήρωσε διεύθυνση.'
               : 'Укажите адрес доставки.';
         }
+
         if (!form.time) {
           e.time = lang === 'en'
             ? 'Select a time slot.'
@@ -130,6 +134,7 @@ function CheckoutApp() {
               ? 'Διάλεξε ώρα.'
               : 'Выберите время.';
         }
+
         return e;
       } catch (error) {
         console.error('Checkout validation error:', error);
@@ -155,7 +160,7 @@ function CheckoutApp() {
    ${lang === 'en' ? 'Quantity' : lang === 'el' ? 'Ποσότητα' : 'Количество'}: ${it.qty}
    ${sizeText}
    ${lang === 'en' ? 'Photo' : lang === 'el' ? 'Φωτογραφία' : 'Фото'}: ${it.image || '-'}
-   ${lang === 'en' ? 'Line total' : lang === 'el' ? 'Σύνολο θέσης' : 'Сумма позиции'}: ${formatMoney(it.lineTotal)}`;
+   ${lang === 'en' ? 'Line total' : lang === 'el' ? 'Σύνολο позиции' : 'Сумма позиции'}: ${formatMoney(it.lineTotal)}`;
       }).join('\n\n');
     };
 
@@ -222,6 +227,14 @@ ${buildOrderItemsText(order.items)}
             'Accept': 'application/json'
           },
           body: JSON.stringify({
+            customerName: order.form.name,
+            phone: order.form.phone,
+            city: order.form.city,
+            delivery: order.form.delivery,
+            address: order.form.address || '-',
+            time: order.form.time,
+            payment: order.form.payment,
+            comment: order.form.comment || '-',
             message: message,
             _subject: `Новый заказ ${order.orderId} — Art Passaion`
           })
